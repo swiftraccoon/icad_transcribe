@@ -1,6 +1,6 @@
 services:
   transcription:
-    image: thegreatcodeholio/icad_transcribe_api:latest
+    image: thegreatcodeholio/icad_transcribe_api:2.2.0
     deploy:
       resources:
         reservations:

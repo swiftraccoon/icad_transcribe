@@ -55,7 +55,7 @@ After running this command, you may need to log out and log back in for the chan
 Choose a directory where you want to deploy the application and clone this repository:
 ```bash
 git clone https://github.com/TheGreatCodeholio/icad_transcribe.git
-cd icad-transcribe
+cd icad_transcribe
 ```
 
 ---
@@ -80,34 +80,48 @@ The `log` directory will store logs, the `var` directory will store whisper mode
 ### 5. **Configure the `.env` File**
 Update the `.env` file with your specific configuration values. Key variables to update:
 - **`WORKING_PATH`**: Set this to the absolute path of the cloned repository you can get this by running `pwd`.
-- **Whisper Configuration**: Set the base configuration for Faster-Whisper.
+- **FASTER WHISPER**: Set the base configuration for Faster-Whisper.
 
 Example `.env`:
 ```dotenv
-# Log Level
+#Log Level
+#1 - Debug
+#2 - Info
+#3 - Warning
+#4 - Error
+#5 - Critical
 LOG_LEVEL=1
 
-# Working Path
-WORKING_PATH="/home/icad_dispatch/icad-dispatch"
+#Working Path
+WORKING_PATH="/home/icad/icad_transcribe"
 
-# URL
-BASE_URL=https://example.com
+#URL (can use localhost or an IP address here
+BASE_URL="https://stt.icaddispatch.com"
 
-# MySQL Configuration
-MYSQL_HOST=mysql
-MYSQL_PORT=3306
-MYSQL_USER=your_user
-MYSQL_PASSWORD='your_password'
-MYSQL_ROOT_PASSWORD='your_root_password'
-MYSQL_DATABASE=icad_db
+#COOKIE
+SESSION_COOKIE_SECURE=True
+SESSION_COOKIE_DOMAIN=stt.icaddispatch.com
+SESSION_COOKIE_NAME=icaddispatch.com
+SESSION_COOKIE_PATH=/
 
-# Redis Configuration
-REDIS_HOST=redis
-REDIS_PORT=6379
-REDIS_PASSWORD='your_redis_password'
-REDIS_CACHE_DB=0
-REDIS_MYSQL_CACHE_DB=3
-REDIS_SESSION_DB=4
+# AUDIO UPLOAD
+AUDIO_UPLOAD_ALLOWED_MIMETYPES="audio/x-wav,audio/x-m4a,audio/mpeg"
+AUDIO_UPLOAD_MIN_AUDIO_LENGTH=0
+AUDIO_UPLOAD_MAX_AUDIO_LENGTH=300
+AUDIO_UPLOAD_MAX_FILE_SIZE_MB=5
+
+# SQLITE
+SQLITE_DATABASE_PATH="etc/transcribe.db"
+
+# FASTER WHISPER
+WHISPER_BATCHED=false
+WHISPER_MODEL="large-v3"
+WHISPER_MODEL_PATH="var/models"
+WHISPER_DEVICE="cuda"
+WHISPER_GPU_INDEXES="all"
+WHISPER_COMPUTE_TYPE="float16"
+WHISPER_CPU_THREADS=4
+WHISPER_NUM_WORKERS=1
 ```
 
 ---
@@ -124,5 +138,47 @@ This command will:
 1. Pull the necessary images from the repository.
 2. Build and start the containers in detached mode (running in the background).
 3. Mount the `log` and `etc` directories based on the `WORKING_PATH` specified in the `.env` file.
+
+---
+
+### 7. **Verify Deployment**
+
+#### Check if Containers Are Running
+To list all running containers, use:
+```bash
+docker ps -a
+```
+
+- This command will display a table of running containers, including their **container IDs**, names, and status.
+
+#### Check Container Logs
+1. Identify the container name or ID from the output of `docker ps`.
+2. View live logs for a specific container:
+   ^^bash
+   docker logs -f <container_id_or_name>
+   ^^
+- Replace `<container_id_or_name>` with the actual container ID or name (e.g., `flask-app`).
+
+#### Example
+To view logs for the Flask application:
+```bash
+docker logs -f flask-app
+```
+
+This will show real-time logs to help you verify that the services are starting as expected.
+
+---
+
+## Security Best Practices
+1. **Run as Non-root**: The application enforces a non-root user within the container to improve security. Host directories and files in the working path must be read/write by the same non-root user (`icad_dispatch`).
+
+2. **Use Secure Passwords**: Update the `.env` file with strong, unique passwords for MySQL and Redis.
+
+3. **Restrict Permissions**: Allow only the `icad_dispatch` group and `your_user` access to the application directory and logs:
+   ```bash
+   sudo chown your_user:icad_dispatch /home/your_user/icad_transcribe
+   sudo chmod -R 760 /home/your_user/icad_transcribe
+   ```
+4. **Use HTTPS**: Ensure the application is accessed via HTTPS in production to secure data in transit.
 
 ---
