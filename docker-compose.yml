@@ -1,0 +1,16 @@
+services:
+  transcription:
+    image: thegreatcodeholio/icad_transcribe_api:latest
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    ports:
+      - "9912:9912"
+    volumes:
+      - ${WORKING_PATH}/log:/app/log
+      - ${WORKING_PATH}/etc:/app/etc
+      - ${WORKING_PATH}/var:/app/var
