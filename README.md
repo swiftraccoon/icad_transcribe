@@ -1,184 +1,327 @@
-# iCAD Transcribe
+# ICAD Transcribe
 
-iCAD Transcribe is a Progressive Web Application (PWA) that processes audio inputs from a police scanner application and returns a transcribe of the audio. The input audio can be manipulated with different pre-processors to help create more accurate transcripts.
+**ICAD Transcribe** is a Flask-based web application that processes and transcribes audio files using a [Faster Whisper](https://github.com/SYSTRAN/faster-whisper) model. It provides:
+
+1. **RESTful endpoints** for uploading and transcribing audio
+2. **Configurable** Whisper model settings (decoding, prompts, VAD, tone-removal, amplification, etc.)
+3. **Integration** with SQLite for application/user/config storage
+4. **Robust pre-processing** (tone detection/removal, VAD filtering, amplification)
+5. **API token management** for programmatic access
+6. **Web-based** minimal admin panel for managing systems, talkgroups, transcription configs, etc.
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Requirements](#requirements)
+- [Installation & Setup](#installation--setup)
+- [Configuration](#configuration)
+- [Running the Application](#running-the-application)
+- [Endpoints Overview](#endpoints-overview)
+- [Transcription Flow](#transcription-flow)
+- [Usage Examples](#usage-examples)
+
+---
+
+## Features
+
+- **Upload & Transcribe**: Send audio via REST (`/api/transcribe/get`) to get back JSON transcripts (including word-level timestamps if enabled).
+- **Multiple Configurations**: Create or customize multiple "transcribe configurations" with different Whisper settings—like beam size, temperature, VAD thresholds, prompt text, etc.
+- **Tone Removal**: Detect and remove various alert tones (DTMF, MDC, two-tone, hi-low warble, etc.) from the audio or inject them as special segments in the transcript.
+- **Voice Activity Detection (VAD)**: Filter out non-speech audio to reduce noise or only amplify speech segments.
+- **Amplification**: Increase volume of speech segments while leaving non-speech or removed-tone sections silent.
+- **GPU/CPU Support**: Automatically load the model on multiple GPUs (when `WHISPER_DEVICE=cuda`) or fallback to CPU.
+- **SQLite Storage**: Store user accounts, tokens, and Whisper configurations in a local SQLite database.  
+- **Session/Token Auth**: Endpoints for both a session-based admin UI and token-based programmatic usage.
+- **File Validation**: Check MIME types, durations, etc., upon file upload.
+
+---
+
+## Project Structure
+
+A quick overview of key directories and modules:
+
+```
+.
+├── etc/
+│   ├── secret_key           # Auto-generated secret key file if not provided
+│   └── config.json          # (Optional) Additional config files
+├── init_db/
+│   └── transcribe_db.sql    # SQL schema for initial database creation
+├── log/
+│   └── icad_transcribe.log  # Default log output (auto-created)
+├── static/
+│   └── audio/               # Directory where uploaded/processed audio can be stored
+├── templates/               # HTML templates for minimal admin pages
+├── var/
+│   └── models/              # Location of downloaded whisper models (faster-whisper)
+├── src/
+│   ├── lib/                 # Core library modules:
+│   │   ├── address_handler.py
+│   │   ├── audio_file_module.py
+│   │   ├── audio_metadata_module.py
+│   │   ├── exceptions_module.py
+│   │   ├── gpu_handler.py
+│   │   ├── logging_module.py
+│   │   ├── replacement_handler.py
+│   │   ├── sqlite_module.py
+│   │   ├── system_module.py
+│   │   ├── talkgroup_module.py
+│   │   ├── token_module.py
+│   │   ├── transcribe_text_module.py
+│   │   ├── user_module.py
+│   │   ├── utility_module.py
+│   │   └── whisper_module.py
+│   ├── routes/
+│   │   ├── admin/       # Admin Blueprint (Dashboard pages)
+│   │   ├── api/         # API Blueprints (system/talkgroup/transcribe/whisper)
+│   │   ├── auth/        # Auth Blueprint (login/logout/token)
+│   │   ├── decorators.py
+│   │   └── middleware.py
+│   └── app.py           # Main Flask Application Entry
+└── requirements.txt      # Python dependencies
+```
 
 ---
 
 ## Requirements
-- **Linux**: This software is mean to be run on a Linux Server of some sort. I developed it running on a debian based distro.
-- **Docker**: Ensure Docker is installed on your system. [Install Docker](https://docs.docker.com/get-docker/)
-- **Git**: Required to clone the repository. [Install Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+
+- **Python 3.9+** (Recommended; tested up to 3.12)
+- [FFmpeg](https://ffmpeg.org/) (required by pydub to process audio)
+- (Optional) **NVIDIA GPU** with `nvidia-smi` for CUDA-based transcription
+- Python packages (typical):
+  - `flask`, `flask_session`, `Werkzeug`
+  - `faster-whisper`
+  - `pydub`
+  - `silero_vad`
+  - `bcrypt`
+  - `python-magic`
+  - `numpy`
+  - `sqlite3` (standard library)
+  - etc.
+
+See **requirements.txt** or the `pyproject.toml` (if present) for the full list.
 
 ---
 
-## Deployment Guide
+## Installation & Setup
 
-Follow these steps to deploy the application from scratch:
-
-### 1. **Create a Non-root User**
-For security and compatibility with the Docker image, create a non-root user on your host system. The user will not have login access to the host.
-
-Run the following commands:
-```bash
-# Create a group with GID 9911
-sudo groupadd -g 9911 icad_dispatch
-
-# Create a user with UID 9911, assign to the group, and disable login
-sudo useradd -M -s /usr/sbin/nologin -u 9911 -g icad_dispatch icad_dispatch
-```
-
-**Explanation**:
-- **`-M`**: Prevents creating a home directory for the user (the user won't own files outside the application scope).
-- **`-s /usr/sbin/nologin`**: Sets the shell to `/usr/sbin/nologin`, disabling the user from logging into the system interactively.
-
----
-
-### 2. **Grant Group Access to Your User**
-To allow your regular user to manage files owned by the `icad_dispatch` group (e.g., for logs and configuration files), add your user to the `icad_dispatch` group.
-
-Run the following command:
-```bash
-# Add your user to the icad_dispatch group
-sudo usermod -aG icad_dispatch your_user
-```
-
-**Explanation**:
-- **`usermod`**: Modifies the properties of an existing user.
-- **`-aG`**: Appends the user to the specified group without removing them from existing groups.
-- Replace `your_user` with your current username.
-
-After running this command, you may need to log out and log back in for the changes to take effect. Once added to the group, your user will have read and write access to files owned by `icad_dispatch`.
-
----
-
-### 3. **Clone the Repository**
-Choose a directory where you want to deploy the application and clone this repository:
-```bash
-git clone https://github.com/TheGreatCodeholio/icad_transcribe.git
-cd icad_transcribe
-```
-
----
-
-### 4. **Set Up the Directory Structure**
-Ensure the directory has the required structure for the application to function correctly. The `.env` file specifies the working path for mounting volumes.
-
-#### Create and Adjust Permissions for Directories:
-Run the following commands:
-```bash
-# Create the required directories
-mkdir -p log etc var
-
-# Change ownership to the non-root user
-sudo chown -R icad_dispatch:icad_dispatch log etc
-```
-
-The `log` directory will store logs, the `var` directory will store whisper models, and the `etc` directory will store configuration files.
-
----
-
-### 5. **Configure the `.env` File**
-Update the `.env` file with your specific configuration values. Key variables to update:
-- **`WORKING_PATH`**: Set this to the absolute path of the cloned repository you can get this by running `pwd`.
-- **FASTER WHISPER**: Set the base configuration for Faster-Whisper.
-
-Example `.env`:
-```dotenv
-#Log Level
-#1 - Debug
-#2 - Info
-#3 - Warning
-#4 - Error
-#5 - Critical
-LOG_LEVEL=1
-
-#Working Path
-WORKING_PATH="/home/icad/icad_transcribe"
-
-#URL (can use localhost or an IP address here
-BASE_URL="https://stt.icaddispatch.com"
-
-#COOKIE
-SESSION_COOKIE_SECURE=True
-SESSION_COOKIE_DOMAIN=stt.icaddispatch.com
-SESSION_COOKIE_NAME=icaddispatch.com
-SESSION_COOKIE_PATH=/
-
-# AUDIO UPLOAD
-AUDIO_UPLOAD_ALLOWED_MIMETYPES="audio/x-wav,audio/x-m4a,audio/mpeg"
-AUDIO_UPLOAD_MIN_AUDIO_LENGTH=0
-AUDIO_UPLOAD_MAX_AUDIO_LENGTH=300
-AUDIO_UPLOAD_MAX_FILE_SIZE_MB=5
-
-# SQLITE
-SQLITE_DATABASE_PATH="etc/transcribe.db"
-
-# FASTER WHISPER
-WHISPER_BATCHED=false
-WHISPER_MODEL="large-v3"
-WHISPER_MODEL_PATH="var/models"
-WHISPER_DEVICE="cuda"
-WHISPER_GPU_INDEXES="all"
-WHISPER_COMPUTE_TYPE="float16"
-WHISPER_CPU_THREADS=4
-WHISPER_NUM_WORKERS=1
-```
-
----
-
-### 6. **Run Docker Compose**
-With the environment configured and directories prepared, you can start the application using Docker Compose.
-
-Run the following command:
-```bash
-docker compose up -d
-```
-
-This command will:
-1. Pull the necessary images from the repository.
-2. Build and start the containers in detached mode (running in the background).
-3. Mount the `log` and `etc` directories based on the `WORKING_PATH` specified in the `.env` file.
-
----
-
-### 7. **Verify Deployment**
-
-#### Check if Containers Are Running
-To list all running containers, use:
-```bash
-docker ps -a
-```
-
-- This command will display a table of running containers, including their **container IDs**, names, and status.
-
-#### Check Container Logs
-1. Identify the container name or ID from the output of `docker ps`.
-2. View live logs for a specific container:
-   ^^bash
-   docker logs -f <container_id_or_name>
-   ^^
-- Replace `<container_id_or_name>` with the actual container ID or name (e.g., `flask-app`).
-
-#### Example
-To view logs for the Flask application:
-```bash
-docker logs -f flask-app
-```
-
-This will show real-time logs to help you verify that the services are starting as expected.
-
----
-
-## Security Best Practices
-1. **Run as Non-root**: The application enforces a non-root user within the container to improve security. Host directories and files in the working path must be read/write by the same non-root user (`icad_dispatch`).
-
-2. **Use Secure Passwords**: Update the `.env` file with strong, unique passwords for MySQL and Redis.
-
-3. **Restrict Permissions**: Allow only the `icad_dispatch` group and `your_user` access to the application directory and logs:
+1. **Clone the repository**:
    ```bash
-   sudo chown your_user:icad_dispatch /home/your_user/icad_transcribe
-   sudo chmod -R 760 /home/your_user/icad_transcribe
+   git clone https://github.com/TheGreatCodeholio/icad_transcribe
+   cd icad_transcribe
    ```
-4. **Use HTTPS**: Ensure the application is accessed via HTTPS in production to secure data in transit.
+
+2. **Create and activate a virtual environment** (optional but recommended):
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+
+3. **Install Python dependencies**:
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+   Ensure that you also have FFmpeg installed and available on your system PATH.
+
+4. **Initialize environment variables**:
+   - You can create a `.env` file in the project root, or set them in your shell environment:
+     ```bash
+     # Example .env or environment export
+     export SECRET_KEY="some-random-string"
+     export LOG_LEVEL=1
+     export WHISPER_MODEL="small.en"
+     export WHISPER_DEVICE="cpu"            # or "cuda"
+     export WHISPER_GPU_INDEXES="0,1"       # or "all", if using multiple GPUs
+     export AUDIO_UPLOAD_MAX_FILE_SIZE_MB=5
+     ```
+   - If `SECRET_KEY` is not provided, a file `etc/secret_key` will be generated automatically.
+
+5. **Database Initialization**:
+   - On first run, the code automatically creates **SQLite** database file using `init_db/transcribe_db.sql`.
+   - The default path is controlled by environment variable `SQLITE_DATABASE_PATH`. If not set, it defaults to `1` (which is replaced with an actual path).
+     - Typically, you'd do:  
+       `export SQLITE_DATABASE_PATH="./var/icad_transcribe.db"`
+     - The app logs warnings if it doesn't find the DB. It will create tables and a default `admin` user with password `admin`.
 
 ---
+
+## Configuration
+
+In addition to any optional `config.json`, the application respects the following environment variables:
+
+| Variable                               | Default                               | Description                                                                                                                                                                            |
+|----------------------------------------|---------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`SECRET_KEY`**                       | *Auto-generated*                      | Secret key for session signing. If undefined, the app creates/stores a random key in `etc/secret_key`.                                                                                 |
+| **`LOG_LEVEL`**                        | `1` (DEBUG)                           | Logging verbosity, mapped to Python log levels: `1=DEBUG`, `2=INFO`, `3=WARNING`, `4=ERROR`, `5=CRITICAL`.                                                                             |
+| **`WHISPER_MODEL_PATH`**               | `var/models`                          | Directory where Faster-Whisper models are downloaded/stored.                                                                                                                           |
+| **`WHISPER_MODEL`**                    | `small.en`                            | Which Faster-Whisper model variant to load (e.g., `tiny`, `base`, `small`, `medium`, `large`, or an `.en` variant).                                                                    |
+| **`WHISPER_DEVICE`**                   | `cpu`                                 | Device selection for inference: `cpu` or `cuda`.                                                                                                                                       |
+| **`WHISPER_GPU_INDEXES`**              | `0`                                   | Comma-separated GPU indices to use (e.g. `0,1`) or `all` for every available GPU. Only relevant if `WHISPER_DEVICE=cuda`.                                                               |
+| **`WHISPER_COMPUTE_TYPE`**             | `float16`                             | Data precision for Faster-Whisper (e.g., `float32`, `float16`, `int8_float16`).                                                                                                        |
+| **`WHISPER_CPU_THREADS`**              | `4`                                   | Number of CPU threads to use if `WHISPER_DEVICE=cpu`.                                                                                                                                  |
+| **`WHISPER_NUM_WORKER`**               | `1`                                   | Internal parallelism/workers used during model loading.                                                                                                                                |
+| **`WHISPER_BATCHED`**                  | `False`                               | Whether to enable batched inference (`True` or `False`).                                                                                                                               |
+| **`SQLITE_DATABASE_PATH`**             | `1`                                   | Path for the SQLite database file. If not set or invalid, the system attempts to create a default local DB file.                                                                       |
+| **`BASE_URL`**                         | `localhost`                           | Used for references to the application’s base URL (e.g., in templates).                                                                                                                 |
+| **`SESSION_COOKIE_SECURE`**            | `False`                               | If `True`, session cookies only sent over HTTPS.                                                                                                                                        |
+| **`SESSION_COOKIE_DOMAIN`**            | `localhost`                           | The domain for session cookies.                                                                                                                                                         |
+| **`SESSION_COOKIE_NAME`**              | `localhost`                           | Cookie name for the session.                                                                                                                                                            |
+| **`SESSION_COOKIE_PATH`**              | `/`                                   | Path for which the session cookie is valid.                                                                                                                                             |
+| **`SESSION_COOKIE_SAMESITE`**          | `Lax`                                 | Cross-site protection policy for session cookies (`Lax`, `Strict`, or `None`).                                                                                                          |
+| **`AUDIO_UPLOAD_MAX_FILE_SIZE_MB`**    | `5`                                   | Maximum audio upload size in MB. If exceeded, the request is rejected.                                                                                                                  |
+| **`AUDIO_UPLOAD_ALLOWED_MIMETYPES`**   | `audio/x-wav,audio/x-m4a,audio/mpeg`  | Comma-separated list of acceptable MIME types for uploaded audio.                                                                                                                       |
+| **`AUDIO_UPLOAD_MIN_AUDIO_LENGTHS`**   | `0`                                   | Minimum audio file duration (in seconds). Set to `0` to allow any minimum.                                                                                                              |
+| **`AUDIO_UPLOAD_MAX_AUDIO_LENGTH`**    | `300`                                 | Maximum audio file duration (in seconds). Default 300 allows up to 5 minutes.                                                                                                           |
+
+> **Note**  
+> - If you omit `SECRET_KEY`, a random one is generated and persisted at `etc/secret_key`.  
+> - The `SQLITE_DATABASE_PATH` defaults to a special placeholder (`1`) that triggers automatic creation of a local DB under `var/`. You can override it with a real path (e.g., `export SQLITE_DATABASE_PATH=./var/icad_transcribe.db`).  
+> - `WHISPER_BATCHED` should be set to a string `"True"` or `"False"` (the code interprets it as a boolean).  
+> - `WHISPER_GPU_INDEXES` has no effect unless `WHISPER_DEVICE="cuda"`.  
+> - `AUDIO_UPLOAD_*` variables control validations in `audio_file_module.py`.
+
+Once your environment variables are configured, run the Flask app (or Gunicorn, etc.) as normal. The application reads and applies these values at startup.
+---
+
+## Running the Application
+
+1. **Local development run**:
+   ```bash
+   (venv) python src/app.py
+   ```
+   The Flask server will start, typically at `http://127.0.0.1:5000`.
+
+2. **Production**:  
+   In production, run behind a WSGI container (e.g., gunicorn), then reverse-proxy from NGINX. For example:
+   ```bash
+   gunicorn --bind 0.0.0.0:3001 src.app:app
+   ```
+
+3. **Log in**:  
+   Access the base site in your browser:  
+   ```
+   http://localhost:5000/
+   ```
+   The default admin username is `admin` with password `admin`.  
+   Once logged in, you’ll see minimal admin pages:
+   - `GET /admin/dashboard`
+   - `GET /admin/configurations`
+   - etc.
+
+---
+
+## Endpoints Overview
+
+The app is organized into several **Flask Blueprints** under `src/routes/`:
+
+### 1. Authentication
+
+- **`POST /auth/login`**  
+  - Form fields: `username`, `password`
+  - Sets session upon success
+- **`GET /auth/logout`**  
+  - Clears session
+- **`POST /auth/token/add`**  
+  - Creates an API token for programmatic use
+- **`GET /auth/token/get`**  
+  - Lists tokens filtered by optional parameters
+- **`POST /auth/token/update`** / **`delete`**  
+  - Update or remove an API token
+
+### 2. Transcription
+
+- **`POST /api/transcribe/get`**  
+  - Expects an `audio` file in form-data
+  - Optional `transcribe_config_id` to pick custom settings
+  - Returns JSON with transcript and segment details
+  - Requires session login or token-based auth
+
+### 3. System & Talkgroup Management
+
+- **`POST /api/system/add`**, `update`, `delete`
+- **`GET /api/system/get`**  
+  - Supports query params for searching
+- **`POST /api/talkgroup/add`**, `update`, `delete`
+- **`GET /api/talkgroup/get`**
+
+### 4. Whisper Configuration
+
+- **`POST /api/whisper/config/add`**, `update`, `delete`
+- **`GET /api/whisper/config/get`**
+
+These allow you to create multiple transcription configurations, each referencing different advanced settings (like beam size, temperature arrays, VAD, tone removal, etc.).
+
+### 5. Admin Pages
+
+- **`GET /admin/dashboard`**  
+  Basic admin home page.  
+- **`GET /admin/configurations`**  
+  Manage transcription configs.
+
+---
+
+## Transcription Flow
+
+1. **Upload** an audio file (`POST /api/transcribe/get`) including any optional metadata:
+   - The server **validates** the file (MIME type, length).
+   - The server applies **pre-process** steps:  
+     a) Tone detection/removal (silence inserted where tones were removed).  
+     b) (Optionally) Voice Activity Detection to isolate speech.  
+     c) (Optionally) Amplification of speech segments.  
+   - The processed audio is then fed to **Faster-Whisper** with the chosen config.
+2. **Segmentation**: The model returns segments (and word-level timestamps if enabled).
+3. **Tone Injection**: If tones were detected, they can be re-injected as annotated text segments.
+4. **Metadata**: Associates segments with any external metadata (e.g., talkgroup or source units).
+5. **Response**: A JSON object with final transcript and an array of segments.
+
+---
+
+## Usage Examples
+
+### 1. Simple `curl` example
+
+```bash
+curl -X POST \
+     -F "audio=@audio_file.wav" \
+     -F "transcribe_config_id=1" \
+     http://localhost:5000/api/transcribe/get
+```
+
+- Returns JSON:
+  ```json
+  {
+    "success": true,
+    "message": "Transcribe Success!",
+    "transcript": "Hello world, this is a test.",
+    "segments": [
+      {
+        "segment_id": 1,
+        "text": "Hello world, this is a test.",
+        "words": [ ... word-level data ...],
+        "start": 0.0,
+        "end": 3.5
+      }
+    ],
+    "process_time_seconds": 1.23
+  }
+  ```
+
+### 2. Using an API token
+
+If you generated a token `YOUR_TOKEN_HERE`, you can supply it in:
+
+- A header: `Authorization: Bearer YOUR_TOKEN_HERE`
+- Or form field: `key=YOUR_TOKEN_HERE`
+
+For example:
+
+```bash
+curl -X POST \
+     -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+     -F "audio=@audio_file.wav" \
+     http://localhost:5000/api/transcribe/get
+```
