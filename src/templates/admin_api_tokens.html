@@ -1,0 +1,372 @@
+{% extends "admin_base.html" %}
+{% block title %}Systems - iCAD Dispatch{% endblock %}
+{% block content %}
+
+    <!-- Token Modals: -->
+    <!-- Add Token Modal -->
+    <div class="modal fade" id="addTokenModal" tabindex="-1" aria-labelledby="addTokenModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTokenModalLabel">Add Token</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addTokenForm">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                        <input type="hidden" name="user_id" id="addUserId" value="{{ session.get('user_id') }}">
+                        <div class="mb-3">
+                            <label for="tokenName" class="form-label">Token Name</label>
+                            <input type="text" class="form-control" id="tokenName" name="token_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ipAddress" class="form-label">IP Address(es) (comma-separated) or * for no restriction.</label>
+                            <input type="text" class="form-control" id="ipAddress" name="ip_address" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveTokenBtn">Save Token</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Token Modal -->
+    <div class="modal fade" id="editTokenModal" tabindex="-1" aria-labelledby="editTokenModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editTokenModalLabel">Edit Token</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editTokenForm">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                        <!-- Hidden field to store the token_id -->
+                        <input type="hidden" id="editTokenId" name="token_id">
+                        <div class="mb-3">
+                            <label for="editTokenValue" class="form-label">Token</label>
+                            <input type="text" class="form-control" id="editTokenValue" name="token">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editTokenName" class="form-label">Token Name</label>
+                            <input type="text" class="form-control" id="editTokenName" name="token_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editIpAddress" class="form-label">IP Address(es) (comma-separated) or * for no restriction.</label>
+                            <input type="text" class="form-control" id="editIpAddress" name="token_ip_address" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="updateTokenBtn">Update Token</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="content px-3 py-2">
+        <div class="container-fluid">
+            <div class="mb-3">
+                <h4>Token Editor</h4>
+            </div>
+            <!-- API Tokens -->
+            <div id="updateToken" class="col-12 col-md-6 offset-md-3 mt-4">
+
+                <div class="col-12 card border">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">API Tokens</h5>
+                        <!-- Button to trigger "Add Token" modal -->
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTokenModal">
+                            Add Token
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <!-- Table for displaying tokens -->
+                        <table class="table table-striped table-hover" id="tokenTable">
+                            <thead>
+                            <tr>
+                                <th>Token</th>
+                                <th>Name</th>
+                                <th>IP Addresses</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <!-- Rows will be populated dynamically by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+
+        const csrf_token = `{{ csrf_token }}`
+
+        /**
+         * Initialize event listeners and sidebar elements once the DOM is ready.
+         */
+        document.addEventListener("DOMContentLoaded", function () {
+            initSidebarBackButton();
+            initAddConfigButton();
+            initInfoModalListeners();
+            initFormListeners();
+            loadConfigurationsMenu();
+            if (window.innerWidth < 768) {
+                document.querySelector("#sidebar").classList.toggle("collapsed");
+            }
+        });
+
+        // =======================
+        // 1. Initialize Sidebar
+        // =======================
+
+        /**
+         * Initializes the back button in the sidebar.
+         */
+        function initSidebarBackButton() {
+            const sidebarNavigation = document.getElementById("sidebarNav");
+
+            const sidebarBackButton = document.createElement("a");
+            sidebarBackButton.setAttribute("class", "sidebar-link");
+            sidebarBackButton.setAttribute("href", "{{ url_for('admin.admin_dashboard') }}");
+
+            // Set the HTML for the back button
+            sidebarBackButton.innerHTML = `<i class="bi bi-caret-left-fill"><i> Back`;
+
+            sidebarNavigation.appendChild(sidebarBackButton);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const tokenTableBody = document.querySelector('#tokenTable tbody');
+            const addTokenModal = document.getElementById('addTokenModal');
+            const editTokenModal = document.getElementById('editTokenModal');
+
+            // Elements in Add Form
+            const addTokenForm = document.getElementById('addTokenForm');
+            const saveTokenBtn = document.getElementById('saveTokenBtn');
+
+            // Elements in Edit Form
+            const editTokenForm = document.getElementById('editTokenForm');
+            const updateTokenBtn = document.getElementById('updateTokenBtn');
+
+            // Fetch and populate the token table on page load
+            fetchTokens();
+
+            /* ------------------ FETCH TOKENS ------------------ */
+            function fetchTokens() {
+                fetch('/auth/token/get')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log("Got Tokens:", data.message);
+                        } else {
+                            console.log("Get Token Error:", data.message);
+                            showAlert(data.message, "danger");
+                        }
+                        populateTokenTable(data.result || []);
+                    })
+                    .catch(err => console.error('Error:', err));
+            }
+
+            function populateTokenTable(tokens) {
+                tokenTableBody.innerHTML = '';
+
+                tokens.forEach(tokenObj => {
+                    // Each tokenObj has: token_id, token, token_name, token_ip_address, user_id
+                    const tr = document.createElement('tr');
+
+                    const tdToken = document.createElement('td');
+                    tdToken.textContent = tokenObj.token;
+
+                    const tdName = document.createElement('td');
+                    tdName.textContent = tokenObj.token_name;
+
+                    const tdIPs = document.createElement('td');
+                    let ipList = tokenObj.token_ip_address || [];
+
+                    // If token_ip_address is JSON-encoded string (e.g. '["127.0.0.1","192.168.1.1"]'), parse it
+                    if (typeof ipList === 'string') {
+                        try {
+                            ipList = JSON.parse(ipList);
+                        } catch (err) {
+                            console.warn('Could not parse IP address list:', err);
+                            ipList = [];
+                        }
+                    }
+
+                    // Convert to comma-separated string
+                    let displayIPs = Array.isArray(ipList) ? ipList.join(', ') : '';
+
+                    // Truncate if too long (optional)
+                    const MAX_LENGTH = 50;  // Adjust as needed
+                    if (displayIPs.length > MAX_LENGTH) {
+                        displayIPs = displayIPs.substring(0, MAX_LENGTH) + '...';
+                    }
+
+                     // Set cell text
+                    tdIPs.textContent = displayIPs;
+
+                    const tdActions = document.createElement('td');
+                    // Edit button
+                    const editBtn = document.createElement('button');
+                    editBtn.classList.add('btn', 'btn-sm', 'btn-warning', 'me-2');
+                    editBtn.textContent = 'Edit';
+                    editBtn.addEventListener('click', () => {
+                        openEditModal(tokenObj);
+                    });
+
+                    // Delete button
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.classList.add('btn', 'btn-sm', 'btn-danger');
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.addEventListener('click', () => {
+                        deleteToken(tokenObj.token_id);
+                    });
+
+                    tdActions.appendChild(editBtn);
+                    tdActions.appendChild(deleteBtn);
+
+                    tr.appendChild(tdToken);
+                    tr.appendChild(tdName);
+                    tr.appendChild(tdIPs);
+                    tr.appendChild(tdActions);
+
+                    tokenTableBody.appendChild(tr);
+                });
+            }
+
+            /* ------------------ ADD TOKEN ------------------ */
+            saveTokenBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // Collect form data
+                const formData = new FormData(addTokenForm);
+
+                // Example: If you need to attach a csrf_token, do formData.append('csrf_token', '...');
+                // Or use a hidden input in the form
+
+                fetch('/auth/token/add', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(resp => resp.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log("Submission Success:", data.message);
+                            showAlert(data.message, "success");
+                        } else {
+                            console.log("Submission Error:", data.message);
+                            showAlert(data.message, "danger");
+                        }
+
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(addTokenModal);
+                        modal.hide();
+
+                        // Reset form
+                        addTokenForm.reset();
+
+                        // Refresh tokens
+                        fetchTokens();
+                    })
+                    .catch(err => console.error('Error:', err));
+            });
+
+            /* ------------------ OPEN EDIT MODAL ------------------ */
+            function openEditModal(tokenObj) {
+                // Populate the edit form
+                editTokenForm.reset();
+
+                // parse ip addresses if they come back as a JSON-encoded string
+                let ipList = tokenObj.token_ip_address || [];
+                // If it's still a string (e.g. '["127.0.0.1","192.168.1.1"]'), parse it
+                if (typeof ipList === 'string') {
+                    try {
+                        ipList = JSON.parse(ipList);
+                    } catch (err) {
+                        console.warn('Could not parse IP Address list:', err);
+                        ipList = [];
+                    }
+                }
+
+                document.getElementById('editTokenId').value = tokenObj.token_id;
+                document.getElementById('editTokenValue').value = tokenObj.token;
+                document.getElementById('editTokenName').value = tokenObj.token_name;
+                document.getElementById('editIpAddress').value  = Array.isArray(ipList) ? ipList.join(', ') : '';
+
+                // Show the modal
+                const modal = new bootstrap.Modal(editTokenModal);
+                modal.show();
+            }
+
+            /* ------------------ UPDATE TOKEN ------------------ */
+            updateTokenBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                const editFormData = new FormData(editTokenForm);
+
+                fetch('/auth/token/update', {
+                    method: 'POST',
+                    body: editFormData
+                })
+                    .then(resp => resp.json())
+                    .then(data => {
+
+                        if (data.success) {
+                            console.log("Submission Success:", data.message);
+                            showAlert(data.message, "success");
+                        } else {
+                            console.log("Submission Error:", data.message);
+                            showAlert(data.message, "danger");
+                        }
+
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(editTokenModal);
+                        modal.hide();
+
+                        // Refresh token list
+                        fetchTokens();
+                    })
+                    .catch(err => console.error('Error:', err));
+            });
+
+            /* ------------------ DELETE TOKEN ------------------ */
+            function deleteToken(token_id) {
+                if (!confirm('Are you sure you want to delete this token?')) return;
+
+                const formData = new FormData();
+                formData.append('token_id', token_id);
+                formData.append('_csrf_token', csrf_token)
+
+                fetch('/auth/token/delete', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(resp => resp.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log("Submission Success:", data.message);
+                            showAlert(data.message, "success");
+                        } else {
+                            console.log("Submission Error:", data.message);
+                            showAlert(data.message, "danger");
+                        }
+
+                        // Refresh tokens
+                        fetchTokens();
+                    })
+                    .catch(err => console.error('Error:', err));
+            }
+        });
+
+
+    </script>
+
+{% endblock %}

@@ -1,0 +1,409 @@
+<!-- index.html -->
+{% extends "admin_base.html" %}
+{% block title %}Dashboard - iCAD Transcribe{% endblock %}
+{% block content %}
+
+    <!-- Transcribe Result Modal -->
+    <div class="modal fade" id="transcribeResultModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="transcribeResultModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h5 class="modal-title" id="transcribeResultModalLabel">Transcribe Results</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body">
+
+                    <!-- Audio Player -->
+                    <!-- In the future, set the src to your uploaded audio path dynamically -->
+                    <div class="mb-3">
+                        <audio controls id="transcribeAudio" style="width: 100%;">
+                            <!-- The source will be set via JS, or you can hardcode if you have a known path -->
+                            <!-- <source src="/path/to/my_audio.wav" type="audio/wav" /> -->
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+
+                    <!-- Summary row (optional) -->
+                    <div class="mb-3">
+                        <strong>Processing Time:</strong> <span id="processTimeSeconds"></span> seconds
+                    </div>
+
+                    <!-- Current Speaker (updates dynamically) -->
+                    <div class="col-6 col-md-8 mb-3">
+                        <label class="fw-bold">Current Speaker:</label>
+                        <div id="currentSpeakerBox" class="p-2 border rounded">
+                            <!-- We will update this text when the speaker changes -->
+                            Unit
+                        </div>
+                    </div>
+
+                    <!-- Segments (optional) -->
+                    <div class="mt-3">
+                        <h6>Transcript</h6>
+                        <div id="segmentsContainer" class="p-2 illustration border rounded" style="max-height: 300px; overflow-y: auto;">
+                            <!-- We will create clickable or highlightable spans for each segment here. -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <main class="content px-3 py-2">
+        <div class="container-fluid">
+            <div class="mb-3">
+                <h4>Transcribe Console</h4>
+            </div>
+            <div class="row">
+                <div class="col-12 col-md-6 d-flex">
+                    <div class="card flex-fill border-0 illustration">
+                        <div class="card-body p-0 d-flex flex-fill">
+                            <div class="row g-0 w-100">
+                                <div class="col-6">
+                                    <div class="p-3 m-1">
+                                        <h4>Welcome Back, Admin</h4>
+                                        <p class="mb-0">iCAD Transcribe</p>
+                                    </div>
+                                </div>
+                                <div class="col-6 align-self-end text-end">
+                                    <img src="{{ url_for('static', filename='img/160x160_icad.png') }}"
+                                         class="img-fluid illustration-img"
+                                         alt="">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 col-md-6 offset-md-3 mt-4">
+                    <div class="card shadow-sm upload-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0">Transcribe Audio</h4>
+                            <!-- Button to open your transcript modal -->
+                            <button
+                                    type="button"
+                                    class="btn btn-outline-warning"
+                                    id="openResultsBtn"
+                                    title="Open Last Transcript"
+                            >
+                                <i class="bi bi-eye" style="font-size: 1.25rem"></i>
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <form id="transcribeForm" enctype="multipart/form-data">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-12 col-md-6">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label for="transcribeConfig" class="form-label">Transcribe Config</label>
+                                        </div>
+                                        <select id="transcribeConfig" class="form-select" name="transcribe_config_id">
+                                        </select>
+                                        <div class="form-text">
+                                            Select a Transcribe Config
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-12 col-md-8">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label for="transcribeSrcList" class="form-label">Source List</label>
+                                        </div>
+                                        <textarea id="transcribeSrcList" class="form-select" rows="2" name="sources">
+                                    </textarea>
+                                        <div class="form-text">
+                                            srcList from Trunk Recorder JSON
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-8">
+                                        <label for="file" class="form-label">Choose File</label>
+                                        <input class="form-control" type="file" id="audioUpload" name="audio" accept=".mp3, .m4a, .wav" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">Upload</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="card-footer text-center">
+                            <small class="text-muted">Accepted formats: MP3, WAV and M4A</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script>
+
+        let lastTranscriptResult = null;
+
+        /**
+         * Initialize event listeners and sidebar elements once the DOM is ready.
+         */
+        document.addEventListener("DOMContentLoaded", function () {
+            initSidebarMenu();
+            loadConfigurationsSelect();
+            initListeners();
+            if (window.innerWidth < 768) {
+                document.querySelector("#sidebar").classList.toggle("collapsed");
+            }
+        });
+
+        // =======================
+        // 1. Initialize Sidebar
+        // =======================
+
+        /**
+         * Initializes the back button in the sidebar.
+         */
+        function initSidebarMenu() {
+            const sidebarNavigation = document.getElementById("sidebarNav");
+
+            const sidebarSettingsCategoryButton = document.createElement("li");
+            sidebarSettingsCategoryButton.setAttribute("class", "sidebar-item mb-3");
+
+            // Set the HTML for the back button
+            sidebarSettingsCategoryButton.innerHTML = `<i class="bi bi-gear"></i> Settings`
+
+            sidebarNavigation.appendChild(sidebarSettingsCategoryButton);
+
+            // Add Systems Config Link
+            let systemsLinkElement = document.createElement("li");
+            systemsLinkElement.className = "sidebar-item";
+            systemsLinkElement.innerHTML = `<a href="{{ url_for('admin.admin_configurations') }}" class="sidebar-link"><i class="bi bi-phone-vibrate-fill"></i> Transcribe Configurations</a>`;
+            sidebarNavigation.appendChild(systemsLinkElement);
+
+            // Add API Tokens Config Link
+            let tokensLinkElement = document.createElement("li");
+            tokensLinkElement.className = "sidebar-item";
+            tokensLinkElement.innerHTML = `<a href="{{ url_for('admin.admin_api_tokens') }}" class="sidebar-link"><i class="bi bi-key-fill"></i> API Tokens</a>`;
+            sidebarNavigation.appendChild(tokensLinkElement);
+        }
+
+
+        /**
+         * Loads and initialize the transcribe form select for configurations.
+         */
+        async function loadConfigurationsSelect() {
+            const fetchUrl = "/api/whisper/config/get";
+
+            try {
+                // Fetch the transcribe configs data
+                const responseData = await fetchData(fetchUrl);
+                console.log("Populating systems menu with data:", responseData.result);
+
+                // Render the systems in the sidebar
+                populateConfigSelect(responseData.result);
+            } catch (error) {
+                console.error("Failed to populate systems menu:", error.message);
+                showAlert(`Could not load systems: ${error.message}`, "danger");
+            }
+        }
+
+        function populateConfigSelect(configData) {
+            const configSelect = document.getElementById('transcribeConfig')
+            // Clear out any existing options
+            configSelect.innerHTML = '';
+
+            configData.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.transcribe_config_id;
+                option.textContent = item.transcribe_config_name;
+                configSelect.appendChild(option);
+            });
+
+
+        }
+
+        function initListeners(){
+            const form = document.getElementById('transcribeForm');
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                submitTranscribeAudio();
+            });
+
+            //view results button
+            document.getElementById('openResultsBtn').addEventListener('click', function() {
+                if (lastTranscriptResult) {
+                    showTranscribeModal(lastTranscriptResult);
+                } else {
+                    showTranscribeModal({});
+                }
+            });
+        }
+
+        function submitTranscribeAudio(){
+            const form = document.getElementById('transcribeForm');
+            const formData = new FormData(form);
+            fetch('/api/transcribe/get', {
+                method: 'POST',
+                body: formData
+            })
+                .then(async (response) => {
+                    // Depending on your API, parse JSON or handle text
+                    const result = await response.json();
+                    if (!result.success) {
+                        // Handle errors
+                        console.error('Error uploading file:', result.message || response.statusText);
+                        showAlert('Upload failed', 'danger');
+                        return;
+                    }
+                    // Success
+                    console.log('Transcribe response:', result);
+
+                    lastTranscriptResult = result;
+
+                    showTranscribeModal(result)
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    showAlert('Something went wrong during upload.', 'danger');
+                });
+        }
+
+        /**
+         * Fetches data from a given URL and returns the parsed JSON.
+         *
+         * @param {string} url - The endpoint to fetch data from.
+         * @returns {Object} Parsed JSON data if the request is successful.
+         * @throws Will throw an error if the response is not OK or success is false.
+         */
+        async function fetchData(url) {
+            try {
+                const response = await fetch(url, {method: "GET"});
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch data from ${url}: ${response.statusText}`);
+                }
+
+                const responseData = await response.json();
+                if (responseData.success) {
+                    console.log(`Retrieved data from ${url}:`, responseData.message);
+                    return responseData;
+                } else {
+                    throw new Error(`Failed getting data from ${url}: ${responseData.message}`);
+                }
+            } catch (error) {
+                console.error(`An unexpected error occurred: ${error.message}`);
+                throw error;
+            }
+        }
+
+        /**
+         * Show the modal and render the transcribe data
+         * @param {Object} response - The transcribe response object
+         * @param {string} audioPath - (Optional) A URL/path to the audio file you want to play
+         */
+        function showTranscribeModal(response, audioPath = null) {
+            const processTime = response.process_time_seconds ?? 'N/A';
+            const segments = response.segments || [];
+            const audioSrc = response.audio_src || null;
+
+            // 1. Display overall data
+            document.getElementById('processTimeSeconds').textContent = processTime;
+
+            // 2. Handle the audio
+            const audioPlayer = document.getElementById('transcribeAudio');
+            audioPlayer.innerHTML = ''; // clear out any existing <source>
+            if (audioPath || audioSrc) {
+                const sourceEl = document.createElement('source');
+                // Adjust MIME type if your audio is .wav, .m4a, etc.
+                sourceEl.type = 'audio/mpeg';
+                sourceEl.src = audioPath || audioSrc;
+                audioPlayer.appendChild(sourceEl);
+                audioPlayer.load();
+            }
+
+            // 3. Clear existing transcript data
+            const segmentsContainer = document.getElementById('segmentsContainer');
+            segmentsContainer.innerHTML = '';
+
+            // 4. Reset the "Current Speaker" box
+            const currentSpeakerBox = document.getElementById('currentSpeakerBox');
+            currentSpeakerBox.textContent = 'Unit';  // default if no speaker
+
+            // We'll track the last speaker and only update if it changes
+            let lastUnitTag = null;
+
+            // 5. Populate the transcript
+            segments.forEach(segment => {
+                // Fallback to "Speaker" if there's no unit_tag
+                const currentUnit = segment.unit_tag || 'Unit';
+
+                // If the speaker changed from the previous segment, update the UI
+                if (currentUnit !== lastUnitTag) {
+                    currentSpeakerBox.textContent =
+                        (currentUnit === 'Unit') ? 'Unit' : `Unit: ${currentUnit}`;
+                    lastUnitTag = currentUnit;
+                }
+
+                // Create an element for the text portion of this segment
+                const segDiv = document.createElement('div');
+                segDiv.classList.add('mb-2'); // spacing
+
+                // If we have word-level timestamps, create <span> per word
+                if (segment.words && segment.words.length > 0) {
+                    segment.words.forEach(wordObj => {
+                        const wordSpan = document.createElement('span');
+                        wordSpan.classList.add('timed-text');
+                        // Store start/end for highlighting
+                        wordSpan.dataset.start = wordObj.start;
+                        wordSpan.dataset.end = wordObj.end;
+                        wordSpan.textContent = wordObj.word;
+                        segDiv.appendChild(wordSpan);
+                    });
+                } else {
+                    // Otherwise, treat it as a single timed-text span
+                    const segSpan = document.createElement('span');
+                    segSpan.classList.add('timed-text');
+                    segSpan.dataset.start = segment.start;
+                    segSpan.dataset.end = segment.end;
+                    segSpan.textContent = segment.text + ' ';
+                    segDiv.appendChild(segSpan);
+                }
+
+                // Add this segment text to the container
+                segmentsContainer.appendChild(segDiv);
+            });
+
+            // 6. Highlight logic: as audio plays, highlight the current text
+            audioPlayer.removeEventListener('timeupdate', handleTimeUpdate);
+            audioPlayer.addEventListener('timeupdate', handleTimeUpdate);
+
+            function handleTimeUpdate() {
+                const currentTime = audioPlayer.currentTime;
+                const timedSpans = document.querySelectorAll('#segmentsContainer .timed-text');
+
+                timedSpans.forEach(span => {
+                    const start = parseFloat(span.dataset.start);
+                    const end = parseFloat(span.dataset.end);
+
+                    // If currentTime is within [start, end)
+                    if (currentTime >= start && currentTime < end) {
+                        span.classList.add('text_highlight');
+                    } else {
+                        span.classList.remove('text_highlight');
+                    }
+                });
+            }
+
+            // 7. Show the Bootstrap modal
+            const modalEl = document.getElementById('transcribeResultModal');
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+
+    </script>
+
+{% endblock %}

@@ -1,0 +1,722 @@
+<!-- index.html -->
+{% extends "admin_base.html" %}
+{% block title %}Systems - iCAD Dispatch{% endblock %}
+{% block content %}
+
+    <!-- Talkgroup Modals -->
+    <!-- Modal: Add System Talkgroup -->
+    <div class="modal fade" id="addSystemTalkgroupModal" data-bs-backdrop="static" data-bs-keyboard="false"
+         tabindex="-1" aria-labelledby="addSystemTalkgroupModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addSystemTalkgroupModalLabel">Add New Talkgroup</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addSystemTalkgroupForm">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                        <input type="hidden" id="addSystemTalkgroupSystemId" name="radio_system_id">
+                        <input type="hidden" id="addSystemTalkgroupSystemName" name="system_name">
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="addSystemTalkgroupDecimal">Decimal</label>
+                                </div>
+                                <input id="addSystemTalkgroupDecimal" class="form-control" type="number" min='1'
+                                       max='999999999' name="talkgroup_decimal" required>
+                                <div class="form-text">Give the talkgroup an ID number between 1 and 999999999</div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3" data-bs-toggle="tooltip" data-bs-placement="top"
+                                 title="Talkgroup Name">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label" for="addSystemTalkgroupDescription">Name</label>
+                                </div>
+                                <input class="form-control" type="text" id="addSystemTalkgroupDescription"
+                                       name="talkgroup_description" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3" data-bs-toggle="tooltip" data-bs-placement="top"
+                                 title="Talkgroup Alpha Tag">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label" for="addSystemTalkgroupAlphaTag">Alpha Tag</label>
+                                </div>
+                                <input class="form-control" type="text" id="addSystemTalkgroupAlphaTag"
+                                       name="talkgroup_alpha_tag">
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3" data-bs-toggle="tooltip" data-bs-placement="top"
+                                 title="Talkgroup Service Type (Fire Dispatch, Fire-Tac)">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label" for="addSystemTalkgroupServiceType">Service Tag</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Talkgroup Service Tag"
+                                       data-param-desc="The service type of the talkgroup. Example: Fire Dispatch">
+                                    </i>
+                                </div>
+                                <input class="form-control" type="text" id="addSystemTalkgroupServiceType"
+                                       name="talkgroup_service_tag">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <div class="row mt-3">
+                        <div class="col-12 text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+                            <button type="button" class="btn btn-primary" id="submitAddSystemTalkgroup">
+                                Add Talkgroup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete System Talkgroup Modal -->
+    <div class="modal fade" id="deleteTalkgroupModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+         aria-labelledby="deleteTalkgroupModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteTalkgroupModalLabel">Delete System</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="deleteTalkgroupForm" class="input-form">
+                        <h4 id="deleteTalkgroupQuestion"></h4>
+                        <input type="hidden" id="deleteTalkgroupId" name="talkgroup_id">
+                        <input type="hidden" id="deleteTalkgroupName" name="talkgroup_description">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button id="submitdeleteTalkgroup" type="button" class="btn btn-outline-danger">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Config Details -->
+    <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <!-- Modal header -->
+                <div class="modal-header">
+                    <h5 class="modal-title" id="infoModalLabel">Parameter Info</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <h5 id="infoModalTitle"></h5>
+                    <p id="infoModalDescription"></p>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<main class="content px-3 py-2">
+    <div class="container-fluid">
+        <div class="mb-3">
+            <h4>Talkgroup Editor ({{ radio_system_name }})</h4>
+
+            <!-- General System Configuration -->
+            <div id="updateGeneral" class="d-none talkgroup-config-section col-12 col-md-6 offset-md-3 mt-4">
+                <h5 id="generalFormTitle" class="mb-3"></h5>
+                <hr>
+                <form id="updateGeneralForm" class="input-form mt-4">
+                    <input type="hidden" id="updateGeneralTalkgroupId" name="talkgroup_id">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="updateSystemTalkgroupDecimal">Decimal</label>
+                                <i class="bi bi-question "
+                                   style="font-size: .9rem; cursor: pointer;"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#infoModal"
+                                   data-param-title="Talkgroup Decimal"
+                                   data-param-desc="A numeric Talkgroup ID given to a talkgroup. Must be unique. Can be any number from 1 - 999999999">
+                                </i>
+                            </div>
+                            <input id="updateSystemTalkgroupDecimal" class="form-control" type="number" min='1'
+                                   max='999999999' name="talkgroup_decimal" required>
+                            <div class="form-text">Give the talkgroup an ID number between 1 and 999999999</div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1"
+                                 data-bs-toggle="tooltip" data-bs-placement="top" title="Talkgroup Name">
+                                <label class="form-label" for="updateSystemTalkgroupDescription">Name</label>
+                                <i class="bi bi-question "
+                                   style="font-size: .9rem; cursor: pointer;"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#infoModal"
+                                   data-param-title="Talkgroup Name"
+                                   data-param-desc="The name or description of the talkgroup. Example: Fire 1 Dispatch">
+                                </i>
+                            </div>
+                            <input class="form-control" type="text" id="updateSystemTalkgroupDescription"
+                                   name="talkgroup_description">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1"
+                                 data-bs-toggle="tooltip" data-bs-placement="top" title="Talkgroup Alpha Tag">
+                                <label class="form-label" for="updateSystemTalkgroupAlphaTag">Alpha Tag</label>
+                                <i class="bi bi-question "
+                                   style="font-size: .9rem; cursor: pointer;"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#infoModal"
+                                   data-param-title="Talkgroup Alpha tag"
+                                   data-param-desc="A short version of the talkgroup name or description. Example: FD1 Paging">
+                                </i>
+                            </div>
+                            <input class="form-control" type="text" id="updateSystemTalkgroupAlphaTag"
+                                   name="talkgroup_alpha_tag">
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1"
+                                 data-bs-toggle="tooltip" data-bs-placement="top"
+                                 title="Talkgroup Service Type (Fire Dispatch, Fire-Tac)">
+                                <label class="form-label" for="updateSystemTalkgroupServiceType">Service Tag</label>
+                                <i class="bi bi-question "
+                                   style="font-size: .9rem; cursor: pointer;"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#infoModal"
+                                   data-param-title="Talkgroup Service Tag"
+                                   data-param-desc="The service type of the talkgroup. Example: Fire Dispatch">
+                                </i>
+                            </div>
+                            <input class="form-control" type="text" id="updateSystemTalkgroupServiceType"
+                                   name="talkgroup_service_tag">
+                        </div>
+                    </div>
+
+                </form>
+                <div class="row mt-3">
+                    <div class="col-12 text-end">
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal"
+                                data-bs-target="#deleteTalkgroupModal">
+                            Delete
+                        </button>
+                        <button id="submitUpdateGeneralForm" type="button" class="btn btn-outline-success">
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+<script>
+    const radioSystemId = {{ radio_system_id|tojson }};
+    const radioSystemName = {{ radio_system_name|tojson }};
+
+    // Caches the *detailed* system talkgroup data retrieved by radioSystemId.
+    // Key: talkgroupId, Value: talkgroup data object
+    const talkgroupDataCache = {};
+
+    /**
+     * Initialize event listeners and sidebar elements once the DOM is ready.
+     */
+    document.addEventListener("DOMContentLoaded", function () {
+        initSidebarBackButton();
+        initAddTalkgroupButton();
+        initInfoModalListeners();
+        initFormListeners();
+        loadTalkgroupsMenu();
+        if (window.innerWidth < 768) {
+            document.querySelector("#sidebar").classList.toggle("collapsed");
+        }
+    });
+
+    // =======================
+    // 1. Initialize Sidebar
+    // =======================
+
+    /**
+     * Initializes the back button in the sidebar.
+     */
+    function initSidebarBackButton() {
+        const sidebarNavigation = document.getElementById("sidebarNav");
+
+        const sidebarBackButton = document.createElement("a");
+        sidebarBackButton.setAttribute("class", "sidebar-link");
+        sidebarBackButton.setAttribute("href", "{{ url_for('admin.admin_systems') }}");
+
+        // Set the HTML for the back button
+        sidebarBackButton.innerHTML = `<i class="bi bi-caret-left-fill"><i> Back`;
+
+        sidebarNavigation.appendChild(sidebarBackButton);
+    }
+
+    /**
+     * Initializes and appends the "Add New Talkgroup" button in the sidebar.
+     */
+    function initAddTalkgroupButton() {
+        const sidebarNavigation = document.getElementById("sidebarNav");
+        const newTalkgroupButton = document.createElement("button");
+
+        // Configure the button for Bootstrap modal
+        newTalkgroupButton.type = "button";
+        newTalkgroupButton.className = "btn btn-primary ms-4 mb-4";
+        newTalkgroupButton.setAttribute("data-bs-toggle", "modal");
+        newTalkgroupButton.setAttribute("data-bs-target", "#addSystemTalkgroupModal");
+        newTalkgroupButton.innerHTML = `<i class="bi bi-plus"></i> Add Talkgroup`;
+
+        // Append to the navigation area
+        sidebarNavigation.appendChild(newTalkgroupButton);
+
+        // Add radio system id and name to new talkgroup form
+        let addRadioSystemId = document.getElementById("addSystemTalkgroupSystemId");
+        addRadioSystemId.value = radioSystemId;
+
+        let addRadioSystemName = document.getElementById("addSystemTalkgroupSystemName");
+        addRadioSystemName.value = radioSystemName;
+
+    }
+
+    /**
+     * Initializes Info Whisper Details Info Modal
+     */
+    function initInfoModalListeners() {
+        const infoModal = document.getElementById('infoModal');
+        infoModal.addEventListener('show.bs.modal', (event) => {
+            // Button that triggered the modal
+            const button = event.relatedTarget;
+
+            // Extract info from data-* attributes
+            const paramTitle = button.getAttribute('data-param-title');
+            const paramDesc = button.getAttribute('data-param-desc');
+
+            // Update the modal content
+            const modalTitle = infoModal.querySelector('#infoModalTitle');
+            const modalDesc = infoModal.querySelector('#infoModalDescription');
+
+            modalTitle.textContent = paramTitle;
+            modalDesc.textContent = paramDesc;
+        });
+    }
+
+    // =========================
+    // 2. Load System Talkgroups & Render
+    // =========================
+
+    /**
+     * Loads and initializes the systems menu in the sidebar.
+     */
+    async function loadTalkgroupsMenu() {
+        const fetchUrl = `/api/system/get?radio_system_id=${radioSystemId}&include_talkgroups=true`;
+
+        try {
+            // Fetch the systems data
+            const responseData = await fetchData(fetchUrl);
+            console.log("Populating system talkgroups menu with data:", responseData.result);
+
+            // Render the systems in the sidebar
+            renderSystemTalkgroupsSidebarMenu(responseData.result[0].talkgroups);
+        } catch (error) {
+            console.error("Failed to populate system talkgroups menu:", error.message);
+            showAlert(`Could not load systems: ${error.message}`, "danger");
+        }
+    }
+
+    /**
+     * Renders a list of system talkgroups in the sidebar.
+     *
+     * @param {Array} talkgroups - An array of system talkgroup objects to display.
+     */
+    function renderSystemTalkgroupsSidebarMenu(talkgroups) {
+        const sidebarNavigation = document.getElementById("sidebarNav");
+
+        talkgroups.forEach((talkgroup) => {
+            // 1) The top-level LI for this system
+            const talkgroupItem = document.createElement("li");
+            talkgroupItem.className = "sidebar-item";
+
+            // 2) The clickable system header link
+            const systemTalkgroupHeaderLink = document.createElement("a");
+            systemTalkgroupHeaderLink.href = "#";
+            systemTalkgroupHeaderLink.className = "sidebar-link collapsed";
+            systemTalkgroupHeaderLink.setAttribute("data-bs-target", `#${talkgroup.talkgroup_id}`);
+            systemTalkgroupHeaderLink.setAttribute("data-bs-toggle", "collapse");
+            systemTalkgroupHeaderLink.setAttribute("aria-expanded", "false");
+            systemTalkgroupHeaderLink.addEventListener("click", () => {
+                hideAllTalkgroupConfigSections();
+            });
+
+            systemTalkgroupHeaderLink.appendChild(document.createTextNode(talkgroup.talkgroup_description));
+
+            // Append the systemHeaderLink to the systemItem
+            talkgroupItem.appendChild(systemTalkgroupHeaderLink);
+
+            // 3) Create a collapsible UL for the system talkgroup’s sub-options
+            const talkgroupSubmenu = document.createElement("ul");
+            talkgroupSubmenu.id = talkgroup.talkgroup_id;
+            talkgroupSubmenu.className = "sidebar-dropdown list-unstyled collapse ms-2";
+            talkgroupSubmenu.setAttribute("data-bs-parent", "#sidebar");
+
+            // === General Submenu link ===
+            const generalSubMenuItem = createSubMenuItem("General", () => {
+                showTalkgroupSection(talkgroup.talkgroup_id, "general");
+            });
+
+            // 6) Append “General,” “Talkgroups,” and the “Whisper” LI to the systemSubmenu
+            talkgroupSubmenu.appendChild(generalSubMenuItem);
+
+            // 7) Finally, append the systemSubmenu to the systemItem
+            talkgroupItem.appendChild(talkgroupSubmenu);
+
+            // 8) Append the systemItem <li> to the sidebar
+            sidebarNavigation.appendChild(talkgroupItem);
+        });
+    }
+
+    /**
+     * Helper to create a submenu item <li> with an <a> link and attach a click handler.
+     */
+    function createSubMenuItem(text, clickHandler) {
+        const submenuItem = document.createElement("li");
+        submenuItem.className = "sidebar-item";
+
+        const submenuLink = document.createElement("a");
+        submenuLink.href = "#";
+        submenuLink.className = "sidebar-link";
+        submenuLink.innerText = text;
+        submenuLink.addEventListener("click", event => {
+            event.preventDefault();
+            if (window.innerWidth < 768) {
+                document.querySelector("#sidebar").classList.toggle("collapsed");
+            }
+            clickHandler();
+        });
+
+        submenuItem.appendChild(submenuLink);
+        return submenuItem;
+    }
+
+    // ===================================
+    // 3. Show Specific System Talkgroup Information
+    // ===================================
+
+    /**
+     * A single function to show the requested system section:
+     * - Hides all sections
+     * - Fetches system talkgroup data
+     * - Fills the relevant form
+     * - Shows the target section
+     */
+    async function showTalkgroupSection(talkgroupId, sectionType) {
+        try {
+            hideAllTalkgroupConfigSections();
+
+            // If we already have data cached, use it.
+            // Otherwise, fetch and cache.
+            let systemTalkgroupData = talkgroupDataCache[talkgroupId];
+            if (!systemTalkgroupData) {
+                const dataURL = `/api/talkgroup/get?talkgroup_id=${talkgroupId}&include_config=True`;
+                const response = await fetchData(dataURL);
+                // Assume response.result is an array with a single object
+                systemTalkgroupData = response.result[0];
+                // Cache the result
+                talkgroupDataCache[talkgroupId] = systemTalkgroupData;
+            }
+
+            const mapping = sectionMappings[sectionType];
+            if (!mapping) {
+                console.error(`No mapping found for sectionType: ${sectionType}`);
+                return;
+            }
+
+            // Fill the form fields
+            mapping.fillFunction(systemTalkgroupData);
+
+            // Fill all Forms Hidden Input Elements
+            setSystemTalkgroupFields(systemTalkgroupData.talkgroup_id, systemTalkgroupData.talkgroup_description)
+
+            // Unhide the section
+            const section = document.getElementById(mapping.containerId);
+            if (section && section.classList.contains("d-none")) {
+                section.classList.remove("d-none");
+            }
+
+        } catch (error) {
+            console.error(`Error loading system talkgroup data for ${sectionType}:`, error);
+            showAlert(`Could not load system talkgroup data: ${error.message}`, "danger");
+        }
+    }
+
+    // Maps a section type to the container ID and the function that fills its form
+    const sectionMappings = {
+        general: {
+            containerId: "updateGeneral",
+            fillFunction: fillSystemTalkgroupGeneralForm
+        }
+    };
+
+    /**
+     * Hides all "talkgroup configuration" sections in the main content area.
+     *
+     * Assumes you mark them with a shared class such as .talkgroup-config-section
+     * or you can list their IDs if you have a small set (e.g. #updateSystemGeneral, #updateSystemPushover, etc.).
+     */
+    function hideAllTalkgroupConfigSections() {
+        const sections = document.querySelectorAll(".talkgroup-config-section");
+        sections.forEach(section => {
+            // Only add the class if it isn't already there
+            if (!section.classList.contains("d-none")) {
+                section.classList.add("d-none");
+            }
+        });
+    }
+
+    // ======================
+    // 4. Form Functions
+    // ======================
+
+    /**
+     * Initialize the listeners on the varius page forms
+     *
+     */
+    function initFormListeners() {
+        // General
+        const submitUpdateTalkgroupForm = document.getElementById("submitUpdateGeneralForm");
+        submitUpdateTalkgroupForm.addEventListener("click", (event) => {
+            event.preventDefault();
+            handleFormSubmission("updateGeneralForm", "updateSystemTalkgroupGeneral");
+        });
+
+        //Add System Talkgroup
+        const submitAddSystemTalkgroup = document.getElementById("submitAddSystemTalkgroup");
+        submitAddSystemTalkgroup.addEventListener("click", (event) => {
+            event.preventDefault();
+            handleFormSubmission("addSystemTalkgroupForm", "addSystemTalkgroup");
+        });
+
+        // Delete system Talkgroup
+        const deleteTalkgroupButton = document.getElementById("submitdeleteTalkgroup");
+        deleteTalkgroupButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            handleFormSubmission("deleteTalkgroupForm", "deleteSystemTalkgroup");
+        });
+
+    }
+
+    /**
+     * Populates the "updateTalkgroupGeneral" form fields with the talkgroup data.
+     *
+     * @param {Object} talkgroupData - The data object for a single system talkgroup.
+     */
+    function fillSystemTalkgroupGeneralForm(talkgroupData) {
+        // Grab the form and its fields
+        const updateSystemTalkgroupForm = document.getElementById("updateGeneralForm");
+
+        updateSystemTalkgroupForm.querySelector("#updateGeneralTalkgroupId").value = talkgroupData.talkgroup_id || "";
+        updateSystemTalkgroupForm.querySelector("#updateSystemTalkgroupDecimal").value = talkgroupData.talkgroup_decimal;
+        updateSystemTalkgroupForm.querySelector("#updateSystemTalkgroupDescription").value = talkgroupData.talkgroup_description;
+        updateSystemTalkgroupForm.querySelector("#updateSystemTalkgroupAlphaTag").value = talkgroupData.talkgroup_alpha_tag;
+        updateSystemTalkgroupForm.querySelector("#updateSystemTalkgroupServiceType").value = talkgroupData.talkgroup_service_tag;
+
+
+        const generalFormTitle = document.getElementById("generalFormTitle");
+        generalFormTitle.innerText = `General (${talkgroupData.talkgroup_description})`;
+
+
+        const deleteTalkgroupForm = document.getElementById("deleteTalkgroupForm");
+        deleteTalkgroupForm.querySelector("#deleteTalkgroupId").value = talkgroupData.talkgroup_id || "";
+        deleteTalkgroupForm.querySelector("#deleteTalkgroupName").value = talkgroupData.talkgroup_description || "";
+        deleteTalkgroupForm.querySelector("#deleteTalkgroupQuestion").textContent = `Delete ${talkgroupData.talkgroup_description}?`;
+
+    }
+
+    /**
+     * Sets the talkgroup ID and name across all forms that have matching name attributes.
+     *
+     * @param {string | number} talkgroupId - The system's unique ID.
+     * @param {string} talkgroupName - The system's name.
+     */
+    function setSystemTalkgroupFields(talkgroupId, talkgroupName) {
+        // 1. Set every field named "radio_system_id"
+        document.querySelectorAll('[name="talkgroup_id"]').forEach(el => {
+            el.value = talkgroupId;
+        });
+        // 2. Set every field named "system_name"
+        document.querySelectorAll('[name="talkgroup_description"]').forEach(el => {
+            el.value = talkgroupName;
+        });
+    }
+
+
+    // ============================
+    // 5. Shared Form Submissions
+    // ============================
+
+    // Map form types to their respective endpoints
+    const formEndpoints = {
+        addSystemTalkgroup: "/api/talkgroup/add",
+        updateSystemTalkgroupGeneral: "/api/talkgroup/update",
+        deleteSystemTalkgroup: "/api/talkgroup/delete",
+    };
+
+    /**
+     * Submits form data via Fetch API to the appropriate endpoint.
+     *
+     * @param {string} formId - The ID of the form element.
+     * @param {string} formType - The form usage type ("addSystem", etc.).
+     */
+    function handleFormSubmission(formId, formType) {
+        const clear_cache_forms = ["updateSystemTalkgroupGeneral"]
+        const formElement = document.getElementById(formId);
+        const formData = new FormData(formElement);
+
+        // Determine endpoint
+        const endpoint = formEndpoints[formType];
+        if (!endpoint) {
+            console.error(`No endpoint defined for formType: ${formType}`);
+            return;
+        }
+
+        fetch(endpoint, {method: "POST", body: formData})
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log("Submission Success:", data.message);
+                    showAlert(data.message, "success");
+
+                    // Reload Page Data On New system and delete system
+                    if (formType === "addSystemTalkgroup" || formType === "deleteSystemTalkgroup") {
+                        reloadPageData();
+                    }
+
+                    // Clear the cache for this system if it's relevant
+                    if (clear_cache_forms.includes(formType)) {
+                        console.log("Resetting Cache:", formType);
+                        const talkgroupId = document.getElementById("updateGeneralTalkgroupId").value;
+                        console.log("Resetting Cache:", talkgroupId)
+                        if (talkgroupId && talkgroupDataCache[talkgroupId]) {
+                            delete talkgroupDataCache[talkgroupId];
+                        }
+                    }
+
+                } else {
+                    console.log("Submission Error:", data.message);
+                    showAlert(data.message, "danger");
+                }
+            })
+            .catch(error => {
+                console.error(`An unexpected error occurred: ${error}`);
+                showAlert(`An unexpected error occurred: ${error}`, "danger");
+            });
+    }
+
+
+    /**
+     * Fetches data from a given URL and returns the parsed JSON.
+     *
+     * @param {string} url - The endpoint to fetch data from.
+     * @returns {Object} Parsed JSON data if the request is successful.
+     * @throws Will throw an error if the response is not OK or success is false.
+     */
+    async function fetchData(url) {
+        try {
+            const response = await fetch(url, {method: "GET"});
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch data from ${url}: ${response.statusText}`);
+            }
+
+            const responseData = await response.json();
+            if (responseData.success) {
+                console.log(`Retrieved data from ${url}:`, responseData.message);
+                return responseData;
+            } else {
+                throw new Error(`Failed getting data from ${url}: ${responseData.message}`);
+            }
+        } catch (error) {
+            console.error(`An unexpected error occurred: ${error.message}`);
+            throw error;
+        }
+    }
+
+
+    // ============================
+    // 7. Reset Page Contents
+    // ============================
+
+    function resetSideNav() {
+        const sidebarNavigation = document.getElementById("sidebarNav");
+        sidebarNavigation.innerHTML = "";
+    }
+
+    function clearSystemTalkgroupDataCache() {
+        Object.keys(talkgroupDataCache).forEach((key) => {
+            delete talkgroupDataCache[key];
+        });
+    }
+
+    function closeAllModals() {
+        // Select all currently visible modals
+        const openModals = document.querySelectorAll('.modal.show');
+        openModals.forEach(modalEl => {
+            // Get the Bootstrap Modal instance for each .modal element
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) {
+                modalInstance.hide();
+            }
+        });
+    }
+
+    function clearAllForms() {
+        const forms = document.querySelectorAll('.input-form');
+        forms.forEach(form => {
+            // Resets every input/select/textarea in the form to its initial value
+            // If there's no initial/default value, it becomes empty/unchecked
+            form.reset();
+        });
+    }
+
+    function reloadPageData() {
+        hideAllTalkgroupConfigSections();
+        resetSideNav();
+        clearAllForms();
+        closeAllModals();
+        clearSystemTalkgroupDataCache();
+        initSidebarBackButton();
+        initAddTalkgroupButton();
+        loadTalkgroupsMenu();
+        if (window.innerWidth < 768) {
+            document.querySelector("#sidebar").classList.toggle("collapsed");
+        }
+    }
+
+</script>
+{% endblock %}

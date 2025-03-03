@@ -1,0 +1,2003 @@
+<!-- index.html -->
+{% extends "admin_base.html" %}
+{% block title %}Systems - iCAD Dispatch{% endblock %}
+{% block content %}
+
+<!-- Config Modals -->
+<!-- Modal: Add Whisper Config -->
+<div class="modal fade" id="addTranscribeConfigModal" data-bs-backdrop="static" data-bs-keyboard="false"
+     tabindex="-1" aria-labelledby="addTranscribeConfigModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addTranscribeConfigModalLabel">Add New Transcribe Config</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addTranscribeConfigForm">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="addTranscribeConfigName">Transcribe Config Name</label>
+                            </div>
+                            <input class="form-control" type="text" id="addTranscribeConfigName"
+                                   name="transcribe_config_name" required>
+                            <div class="form-text">Give the transcribe configuration a unique name.</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="row mt-3">
+                    <div class="col-12 text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" id="submitAddTranscribeConfig">
+                            Create Config
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Whisper Config -->
+<div class="modal fade" id="deleteTranscribeConfigModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+     aria-labelledby="deleteTranscribeConfigModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteTranscribeConfigModalLabel">Delete System</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="deleteTranscribeConfigForm" class="input-form">
+                    <h4 id="deleteTranscribeConfigQuestion"></h4>
+                    <input type="hidden" id="deleteTranscribeConfigId" name="transcribe_config_id">
+                    <input type="hidden" id="deleteTranscribeConfigName" name="transcribe_config_name">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <button id="submitDeleteTranscribeConfig" type="button" class="btn btn-outline-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Config Details -->
+<div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <!-- Modal header -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="infoModalLabel">Parameter Info</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Modal body -->
+            <div class="modal-body">
+                <h5 id="infoModalTitle"></h5>
+                <p id="infoModalDescription"></p>
+            </div>
+
+            <!-- Modal footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<main class="content px-3 py-2">
+    <div class="container-fluid">
+        <div class="mb-3">
+            <h4>Transcribe Config Editor</h4>
+        </div>
+
+        <!-- Transcribe Config Basic -->
+        <div id="updateWhisperBasic" class="d-none transcribe-config-section col-12 col-md-6 offset-md-3 mt-4">
+            <h5 id="updateWhisperBasicFormTitle" class="mb-3"></h5>
+            <hr>
+            <form id="updateWhisperBasicForm" class="input-form mt-4">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                <input type="hidden" id="updateWhisperBasicConfigId" name="transcribe_config_id">
+                <input type="hidden" id="updateWhisperBasicConfigName" name="transcribe_config_name">
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-8">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperBasicName" class="form-label">Config Name</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Config Name"
+                               data-param-desc="A unique name assigned to each configuration.">
+                            </i>
+                        </div>
+                        <input type="text" id="updateWhisperBasicName" name="transcribe_config_name"
+                               class="form-control" />
+                        <div class="form-text">
+                            A unique name assigned to each configuration.
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-8">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperBasicLanguage" class="form-label">Language</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Language"
+                               data-param-desc="The language spoken in the audio. It should be a language code such as en or fr. If unset, the language will be detected in the first 30 seconds of audio. Default: Unset">
+                            </i>
+                        </div>
+                        <input type="text" id="updateWhisperBasicLanguage" name="language"
+                               class="form-control" />
+                        <div class="form-text">
+                            Enter a language code like "en" or "fr". If left blank, the language is
+                            auto-detected.
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperBasicLogProgress" class="form-check-label">
+                                Show Progress
+                            </label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Task"
+                               data-param-desc="Enabling will show a progress bar in the application log when transcribing or translating an audio file. Default: Off">
+                            </i>
+                        </div>
+                        <!-- The hidden field ensures a default value of "0" when the box is unchecked -->
+                        <input type="hidden" name="log_progress" value="0"/>
+                        <input type="checkbox" id="updateWhisperBasicLogProgress" class="form-check-input"
+                               name="log_progress" value="1"/>
+                        <div class="form-text">
+                            Display a progress bar/log during processing.
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="row mt-3">
+                <div class="col-12 text-end">
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal"
+                            data-bs-target="#deleteTranscribeConfigModal">
+                        Delete
+                    </button>
+                    <button id="submitupdateWhisperBasic" type="button" class="btn btn-outline-success">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transcribe Config Decoding -->
+        <div id="updateWhisperDecoding" class="d-none transcribe-config-section col-12 col-md-6 offset-md-3 mt-4">
+            <h5 id="updateWhisperDecodingFormTitle" class="mb-3"></h5>
+            <hr>
+            <form id="updateWhisperDecodingForm" class="input-form mt-4">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                <input type="hidden" id="updateWhisperDecodingConfigId" name="transcribe_config_id">
+                <input type="hidden" id="updateWhisperDecodingConfigName" name="transcribe_config_name">
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperDecodingBatchSize" class="form-label">
+                                Batch Size
+                            </label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Batch Size"
+                               data-param-desc="The maximum number of parallel requests to model for decoding. Default: 8">
+                            </i>
+                        </div>
+                        <input type="number" id="updateWhisperDecodingBatchSize" class="form-control"
+                               name="batch_size" required/>
+                        <div class="form-text">The maximum number of parallel requests to model for decoding.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperDecodingBeamSize" class="form-label">
+                                Beam Size
+                            </label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Beam Size"
+                               data-param-desc="Larger values can improve accuracy but increase computation. Default: 5">
+                            </i>
+                        </div>
+                        <input type="number" id="updateWhisperDecodingBeamSize" class="form-control"
+                               name="beam_size" required/>
+                        <div class="form-text">Larger values can improve accuracy but increase computation.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperDecodingBestOf" class="form-label">
+                                Best Of
+                            </label>
+                            <i class="bi bi-question"
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Best Of"
+                               data-param-desc="Number of candidates when sampling with non-zero temperature. Default: 5">
+                            </i>
+                        </div>
+                        <input type="number" id="updateWhisperDecodingBestOf" class="form-control"
+                               name="best_of" required/>
+                        <div class="form-text">Number of candidates when sampling with non-zero temperature.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperDecodingPatience" class="form-label">
+                                Patience
+                            </label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Patience"
+                               data-param-desc="Beam search patience factor. Default: 1.0">
+                            </i>
+                        </div>
+                        <input type="number" id="updateWhisperDecodingPatience" class="form-control" step="0.1"
+                               name="patience" required/>
+                        <div class="form-text">Beam search patience factor</div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperDecodingLengthPenalty" class="form-label">
+                                Length Penalty
+                            </label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Length Penalty"
+                               data-param-desc="Exponential length penalty constant. Default: 1.0">
+                            </i>
+                        </div>
+                        <input type="number" id="updateWhisperDecodingLengthPenalty" class="form-control"
+                               step="0.1" name="length_penalty" required/>
+                        <div class="form-text">Exponential length penalty constant.</div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperDecodingRepetitionPenalty" class="form-label">
+                                Repetition Penalty
+                            </label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Repetition Penalty"
+                               data-param-desc="Penalize repeated tokens. Values > 1.0 reduce repetition. Default: 1.0">
+                            </i>
+                        </div>
+                        <input type="number" id="updateWhisperDecodingRepetitionPenalty" class="form-control"
+                               step="0.1" name="repetition_penalty" required/>
+                        <div class="form-text">Penalize repeated tokens. > 1.0 reduces repetition.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperDecodingNoRepeatNgramSize" class="form-label">
+                                No Repeat N-gram Size
+                            </label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="No Repeat N-gram Size"
+                               data-param-desc="Prevent repeating n-grams of this size. 0 = disabled. Default: 0">
+
+                            </i>
+                        </div>
+                        <input type="number" id="updateWhisperDecodingNoRepeatNgramSize" class="form-control"
+                               name="no_repeat_ngram_size" required/>
+                        <div class="form-text">
+                            Prevent repeating n-grams of this size.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperDecodingTemperature" class="form-label">
+                                Temperature
+                            </label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Temperature"
+                               data-param-desc="Can be a single value or a list for fallback attempts. Only the first value is used Default: [0.0,0.2,0.4,0.6,0.8,1.0]">
+                            </i>
+                        </div>
+                        <input type="text" id="updateWhisperDecodingTemperature" class="form-control"
+                               name="temperature" required/>
+                        <div class="form-text">
+                            Can be a single value or a comma-separated list in brackets for fallback attempts.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperDecodingCompressionRatioThreshold" class="form-label">
+                                Compression Ratio Threshold
+                            </label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Compression Ratio Threshold"
+                               data-param-desc="If the gzip compression ratio is above this value, treat as failed. Default: 2.4">
+                            </i>
+                        </div>
+                        <input type="number" id="updateWhisperDecodingCompressionRatioThreshold"
+                               class="form-control" step="0.1" name="compression_ratio_threshold" required/>
+                        <div class="form-text">
+                            If exceeded, treat sample as failed.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperDecodingLogProbThreshold" class="form-label">
+                                Log Prob Threshold
+                            </label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Log Prob Threshold"
+                               data-param-desc="If the average log probability over sampled tokens is below this value, treat as failed. Default: -1.0">
+                            </i>
+                        </div>
+                        <input type="number" id="updateWhisperDecodingLogProbThreshold" class="form-control"
+                               step="0.1" name="log_prob_threshold" required/>
+                        <div class="form-text">Below this, treat sample as failed.</div>
+                    </div>
+
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperDecodingNoSpeechThreshold" class="form-label">
+                                No Speech Threshold
+                            </label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="No Speech Threshold"
+                               data-param-desc="If the no_speech probability is higher than this value AND the average log probability over sampled tokens is below `log_prob_threshold`, consider the segment as silent. Default: 0.6">
+                            </i>
+                        </div>
+                        <input type="number" id="updateWhisperDecodingNoSpeechThreshold" class="form-control"
+                               step="0.1" name="no_speech_threshold" required/>
+                        <div class="form-text">
+                            Above this, consider segment silent if log prob is also below threshold.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperDecodingMaxNewTokens" class="form-label">
+                                Max New Tokens
+                            </label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Max New Tokens"
+                               data-param-desc="Maximum number of new tokens to generate per-chunk. If not set, the maximum will be set by the default max_length 448. Default is unset."
+                            >
+                            </i>
+                        </div>
+                        <input type="number" id="updateWhisperDecodingMaxNewTokens" class="form-control"
+                               name="max_new_tokens"/>
+                        <div class="form-text">
+                            Max tokens to generate per chunk.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperDecodingChunkLength" class="form-label">
+                                Chunk Length (seconds)
+                            </label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Chunk Length (seconds)"
+                               data-param-desc=" The length of audio segments. If it is set, it will overwrite the default chunk_length (30) of the FeatureExtractor. Default is unset.">
+                            </i>
+                        </div>
+                        <input type="number" id="updateWhisperDecodingChunkLength" class="form-control"
+                               name="chunk_length"/>
+                        <div class="form-text">
+                            Overwrites the default chunk_length in the FeatureExtractor.
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="row mt-3">
+                <div class="col-12 text-end">
+                    <button id="submitUpdateWhisperDecoding" type="button"
+                            class="btn btn-outline-success">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transcribe Config Prompt Output -->
+        <div id="updateWhisperPrompt" class="d-none transcribe-config-section col-12 col-md-6 offset-md-3 mt-4">
+            <h5 id="updateWhisperPromptFormTitle" class="mb-3"></h5>
+            <hr>
+            <form id="updateWhisperPromptForm" class="input-form mt-4">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                <input type="hidden" id="updateWhisperPromptConfigId" name="transcribe_config_id">
+                <input type="hidden" id="updateWhisperPromptConfigName" name="transcribe_config_name">
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperPromptConditionOnPreviousText" class="form-label">Condition on Previous Text</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Condition on Previous Text"
+                               data-param-desc="If True, the previous output of the model is provided as a prompt for the next window; disabling may make the text inconsistent across windows, but the model becomes less prone to getting stuck in a failure loop, such as repetition looping or timestamps going out of sync. Default: True"
+                            ></i>
+                        </div>
+                        <select id="updateWhisperPromptConditionOnPreviousText" class="form-select" name="condition_on_previous_text">
+                            <option value="1">True</option>
+                            <option value="0">False</option>
+                        </select>
+                        <div class="form-text">
+                            Use the previous window's output as a prompt for consistency (may cause loops).
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperPromptPromptResetOnTemperature" class="form-label">Prompt
+                                Reset On Temperature</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Prompt Reset On Temperature"
+                               data-param-desc="Resets prompt if temperature is above this value. Arg has effect only if condition_on_previous_text is True. Default: 0.5"
+                            ></i>
+                        </div>
+                        <input type="number" id="updateWhisperPromptPromptResetOnTemperature"
+                               class="form-control" step="0.1" name="prompt_reset_on_temperature" required/>
+                        <div class="form-text">
+                            If above this temperature, reset prompt (only applies if condition_on_previous_text
+                            = True).
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperPromptInitialPrompt" class="form-label">Initial
+                                Prompt</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Initial Prompt"
+                               data-param-desc="Optional text string or iterable of token ids to provide as a prompt for the first window. Default: Unset"
+                            ></i>
+                        </div>
+                        <textarea id="updateWhisperPromptInitialPrompt" class="form-control" rows="2"
+                                  name="initial_prompt"></textarea>
+                        <div class="form-text">
+                            Optional text or token IDs for the first window prompt.
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperPromptPrefix" class="form-label">Prefix</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Prefix"
+                               data-param-desc="Optional text to provide as a prefix for the first window. Default Unset"
+                            ></i>
+                        </div>
+                        <textarea id="updateWhisperPromptPrefix" class="form-control" rows="2"
+                                  name="prefix"></textarea>
+                        <div class="form-text">
+                            Optional text always prepended to the output. If set, it overrides hotwords.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperPromptPrependPunctuation" class="form-label">Prepend Punctuation</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Prepend Punctuation"
+                               data-param-desc="If word_timestamps is True, merge these punctuation symbols with the next word. Default: &quot;'“¿([{-、"
+                            ></i>
+                        </div>
+                        <input type="text" id="updateWhisperPromptPrependPunctuation"
+                               class="form-control" name="prepend_punctuations"/>
+                        <div class="form-text">
+                            If word_timestamps is True, merge these punctuation symbols with the next word.
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperPromptAppendPunctuation" class="form-label">Append Punctuation</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Append Punctuation"
+                               data-param-desc="If word_timestamps is True, merge these punctuation symbols with the previous word. Default: &quot;'.。,，!！?？:：”)]}、"
+                            ></i>
+                        </div>
+                        <input type="text" id="updateWhisperPromptAppendPunctuation"
+                               class="form-control" name="append_punctuations"/>
+                        <div class="form-text">
+                            If word_timestamps is True, merge these punctuation symbols with the previous word.
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row g-3 mt-1">
+
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperPromptSuppressBlank" class="form-label">Suppress
+                                Blank</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Suppress Blank"
+                               data-param-desc="Suppress blank outputs at the beginning of the sampling. Default: True"
+                            ></i>
+                        </div>
+                        <select id="updateWhisperPromptSuppressBlank" class="form-select"
+                                name="suppress_blank">
+                            <option value="1">True</option>
+                            <option value="0">False</option>
+                        </select>
+                        <div class="form-text">
+                            Suppress blank outputs at the beginning of sampling.
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperPromptSuppressTokens" class="form-label">Suppress
+                                Tokens</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Suppress Tokens"
+                               data-param-desc="Comma seperated list of token IDs to suppress. -1 will suppress a default set of symbols as defined in `tokenizer.non_speech_tokens()`. Default: -1"
+                            ></i>
+                        </div>
+                        <input type="text" id="updateWhisperPromptSuppressTokens" class="form-control"
+                               name="suppress_tokens" required/>
+                        <div class="form-text">
+                            Comma-separated token IDs to suppress (-1 means default non-speech tokens).
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row g-3 mt-1">
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperPromptWithoutTimestamps" class="form-label">Without
+                                Timestamps</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Without Timestamps"
+                               data-param-desc="Only sample text tokens. Default: False"
+                            ></i>
+                        </div>
+                        <select id="updateWhisperPromptWithoutTimestamps" class="form-select"
+                                name="without_timestamps">
+                            <option value="1">True</option>
+                            <option value="0">False</option>
+                        </select>
+                        <div class="form-text">
+                            If true, only sample text tokens (no timestamps).
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperPromptWordTimestamps" class="form-label">Word
+                                Timestamps</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Word Timestamps"
+                               data-param-desc="Extract word-level timestamps using the cross-attention pattern and dynamic time warping, and include the timestamps for each word in each segment. Default: False"
+                            ></i>
+                        </div>
+                        <select id="updateWhisperPromptWordTimestamps" class="form-select"
+                                name="word_timestamps">
+                            <option value="1">True</option>
+                            <option value="0">False</option>
+                        </select>
+                        <div class="form-text">
+                            If true, extract word-level timestamps via cross-attention and dynamic time warping.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperPromptMaxInitialTimestamp" class="form-label">Max
+                                Initial Timestamp</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Max Initial Timestamp"
+                               data-param-desc="The initial timestamp cannot be later than this. Default: 1.0"
+                            ></i>
+                        </div>
+                        <input type="number" id="updateWhisperPromptMaxInitialTimestamp"
+                               class="form-control" step="0.1" name="max_initial_timestamp" required/>
+                        <div class="form-text">
+                            The initial timestamp cannot exceed this value.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1">
+
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperPromptHallucinationSilenceThreshold"
+                                   class="form-label">Hallucination Silence Threshold</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Hallucination Silence Threshold"
+                               data-param-desc="When word_timestamps is True, skip silent periods longer than this threshold (in seconds) when a possible hallucination is detected. Default: Unset"
+                            ></i>
+                        </div>
+                        <input type="number" id="updateWhisperPromptHallucinationSilenceThreshold"
+                               class="form-control" step="0.1" name="hallucination_silence_threshold"/>
+                        <div class="form-text">
+                            Skip long silent periods to avoid hallucinated text if word_timestamps is true.
+                        </div>
+                    </div>
+
+
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperPromptHotwords" class="form-label">Hotwords / Hint
+                                Phrases</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Hotwords / Hint Phrases"
+                               data-param-desc=" Hotwords/hint phrases to provide the model with. Has no effect if prefix is set. Default: Unset"
+                            ></i>
+                        </div>
+                        <input type="text" id="updateWhisperPromptHotwords" class="form-control"
+                               name="hotwords"/>
+                        <div class="form-text">
+                            Comma-separated hint phrases. Only used if prefix is not set.
+                        </div>
+                    </div>
+
+                </div>
+            </form>
+            <div class="row mt-3">
+                <div class="col-12 text-end">
+                    <button id="submitUpdateWhisperPrompt" type="button"
+                            class="btn btn-outline-success">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transcribe Config Advanced -->
+        <div id="updateWhisperAdvanced" class="d-none transcribe-config-section col-12 col-md-6 offset-md-3 mt-4">
+            <h5 id="updateWhisperAdvancedFormTitle" class="mb-3"></h5>
+            <hr>
+            <form id="updateWhisperAdvancedForm" class="input-form mt-4">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                <input type="hidden" id="updateWhisperAdvancedConfigId" name="transcribe_config_id">
+                <input type="hidden" id="updateWhisperAdvancedConfigName" name="transcribe_config_name">
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperAdvancedClipTimestamps" class="form-label">Clip Timestamps</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Clip Timestamps"
+                               data-param-desc="Comma-separated list start,end,start,end,... timestamps (in seconds) of clips to process. The last end timestamp defaults to the end of the file. vad_filter will be ignored if clip_timestamps is used. Default: Unset"
+                            ></i>
+                        </div>
+                        <input type="text" id="updateWhisperAdvancedClipTimestamps" class="form-control" name="clip_timestamps"/>
+                        <div class="form-text">
+                            Comma-separated start,end pairs. VAD is ignored if clip_timestamps is used.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperAdvancedMultilingual" class="form-label">Multilingual</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Multilingual"
+                               data-param-desc="Perform language detection on every segment. Default: False"
+                            ></i>
+                        </div>
+                        <select class="form-select" id="updateWhisperAdvancedMultilingual" name="multilingual">
+                            <option value="1">True</option>
+                            <option value="0">False</option>
+                        </select>
+                        <div class="form-text">
+                            Perform language detection on every segment.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperAdvancedLanguageDetectionThreshold" class="form-label">Language Detection Threshold</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Language Detection Threshold"
+                               data-param-desc="If the maximum probability of the language tokens is higher than this value, the language is detected. Default: 0.5"
+                            ></i>
+                        </div>
+                        <input type="number" id="updateWhisperAdvancedLanguageDetectionThreshold" class="form-control" step="0.5" name="language_detection_threshold" required/>
+                        <div class="form-text">
+                            If the highest probability of a language token is above this, language is detected.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1">
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperAdvancedLanguageDetectionSegments" class="form-label">Language Detection Segments</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Language Detection Segments"
+                               data-param-desc="Number of segments to consider for the language detection. Default: 1"
+                            ></i>
+                        </div>
+                        <input type="number" id="updateWhisperAdvancedLanguageDetectionSegments" class="form-control" step="1" name="language_detection_segments" required/>
+                        <div class="form-text">
+                            How many segments to consider for language detection.
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+            <div class="row mt-3">
+                <div class="col-12 text-end">
+                    <button id="submitUpdateWhisperAdvanced" type="button"
+                            class="btn btn-outline-success">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transcribe Config Vad -->
+        <div id="updateWhisperVad" class="d-none transcribe-config-section col-12 col-md-6 offset-md-3 mt-4">
+            <h5 id="updateWhisperVadFormTitle" class="mb-3"></h5>
+            <hr>
+            <form id="updateWhisperVadForm" class="input-form mt-4">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                <input type="hidden" id="updateWhisperVadConfigId" name="transcribe_config_id">
+                <input type="hidden" id="updateWhisperVadConfigName" name="transcribe_config_name">
+
+                <!-- VAD Filter toggle -->
+                <div class="form-check form-switch mb-3">
+                    <!-- The hidden field ensures a default value of "0" when the box is unchecked -->
+                    <input type="hidden" name="vad_filter" value="0"/>
+                    <input type="checkbox" id="updateWhisperVadFilterToggle" class="form-check-input" value="1" name="vad_filter">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label for="updateWhisperVadFilterToggle" class="form-check-label">Enable VAD Filter</label>
+                        <i class="bi bi-question "
+                           style="font-size: .9rem; cursor: pointer;"
+                           data-bs-toggle="modal"
+                           data-bs-target="#infoModal"
+                           data-param-title="VAD Filter"
+                           data-param-desc="Enable the voice activity detection (VAD) to filter out parts of the audio without speech. This step is using the Silero VAD model https://github.com/snakers4/silero-vad. Default: Off"
+                        ></i>
+                    </div>
+                </div>
+
+                <!-- Collapsible or hidden inputs for VAD parameters -->
+                <div id="vadParametersSection" class="d-none">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="updateWhisperVadThreshold" class="form-label">Threshold</label>
+                                <i class="bi bi-question "
+                                   style="font-size: .9rem; cursor: pointer;"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#infoModal"
+                                   data-param-title="VAD Threshold"
+                                   data-param-desc="Speech threshold. Silero VAD outputs speech probabilities for each audio chunk, probabilities ABOVE this value are considered as SPEECH. It is better to tune this parameter for each dataset separately, but 'lazy' 0.5 is pretty good for most datasets. If you are missing speech set this lower. Default: 0.5"
+                                ></i>
+                            </div>
+                            <input type="number" id="updateWhisperVadThreshold" class="form-control" step="0.1" name="threshold" required/>
+                            <div class="form-text">
+                                Speech threshold. Probabilities above this are considered speech.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="updateWhisperVadNegThreshold" class="form-label">Neg Threshold</label>
+                                <i class="bi bi-question "
+                                   style="font-size: .9rem; cursor: pointer;"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#infoModal"
+                                   data-param-title="VAD Negative Threshold"
+                                   data-param-desc="Silence threshold for determining the end of speech. If a probability is lower than neg_threshold, it is always considered silence. Values higher than neg_threshold are only considered speech if the previous sample was classified as speech; otherwise, they are treated as silence. This parameter helps refine the detection of speech transitions, ensuring smoother segment boundaries. Default: Unset"
+                                ></i>
+                            </div>
+                            <input type="number" id="updateWhisperVadNegThreshold" class="form-control" step="0.1" name="neg_threshold" />
+                            <div class="form-text">
+                                Silence threshold for determining end of speech.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="updateWhisperVadMinSpeechDuration" class="form-label">Min Speech Duration (ms)</label>
+                                <i class="bi bi-question "
+                                   style="font-size: .9rem; cursor: pointer;"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#infoModal"
+                                   data-param-title="Min Speech Duration (ms)"
+                                   data-param-desc="Final speech chunks shorter min_speech_duration_ms are thrown out. Lower this slightly if speech is missing. Default: 250"
+                                ></i>
+                            </div>
+                            <input type="number" id="updateWhisperVadMinSpeechDuration" class="form-control" name="min_speech_duration_ms" required/>
+                            <div class="form-text">
+                                Speech chunks shorter than this will be thrown out. in Milliseconds.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="updateWhisperVadMinSilenceDuration" class="form-label">Min Silence Duration (ms)</label>
+                                <i class="bi bi-question "
+                                   style="font-size: .9rem; cursor: pointer;"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#infoModal"
+                                   data-param-title="Min Silence Duration (ms)"
+                                   data-param-desc="In the end of each speech chunk wait for min_silence_duration_ms before separating it. Default: 100"
+                                ></i>
+                            </div>
+                            <input type="number" id="updateWhisperVadMinSilenceDuration" class="form-control" name="min_silence_duration_ms" required/>
+                            <div class="form-text">
+                                Time to wait before marking the end of a speech chunk.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="updateWhisperVadSpeechPad" class="form-label">Speech Pad (ms)</label>
+                                <i class="bi bi-question "
+                                   style="font-size: .9rem; cursor: pointer;"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#infoModal"
+                                   data-param-title="Speech Pad (ms)"
+                                   data-param-desc="Final speech chunks are padded by speech_pad_ms each side. Default: 30"
+                                ></i>
+                            </div>
+                            <input type="number" id="updateWhisperVadSpeechPad" class="form-control" name="speech_pad_ms" required/>
+                            <div class="form-text">
+                                Final speech chunks are padded by this amount each side.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="row mt-3">
+                <div class="col-12 text-end">
+                    <button id="submitUpdateWhisperVad" type="button"
+                            class="btn btn-outline-success">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transcribe Config Amplify -->
+        <div id="updateWhisperAmplify" class="d-none transcribe-config-section col-12 col-md-6 offset-md-3 mt-4">
+            <h5 id="updateWhisperAmplifyFormTitle" class="mb-3"></h5>
+            <hr>
+            <form id="updateWhisperAmplifyForm" class="input-form mt-4">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                <input type="hidden" id="updateWhisperAmplifyConfigId" name="transcribe_config_id">
+                <input type="hidden" id="updateWhisperAmplifyConfigName" name="transcribe_config_name">
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperAmplifyEnable" class="form-label">Audio Amplification</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Audio Amplification"
+                               data-param-desc="If True, the audio uploaded is Amplified before being sent to Whisper. Default: False"
+                            ></i>
+                        </div>
+                        <select id="updateWhisperAmplifyEnable" class="form-select" name="amplify">
+                            <option value="1">True</option>
+                            <option value="0">False</option>
+                        </select>
+                        <div class="form-text">
+                            Enable/Disable audio amplification before transcribing.
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperAmplifySafetyDb" class="form-label">Safety dB</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Safety DB"
+                               data-param-desc="Additional dB headroom below 0 dBFS. This adds a small pad of dB below clipping to keep the audio amplified to max without clipping. Default 0.4"
+                            ></i>
+                        </div>
+                        <input type="number" id="updateWhisperAmplifySafetyDb" class="form-control" step="0.1" name="safety_db" required/>
+                        <div class="form-text">
+                            Additional dB headroom below 0 dBFS.
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperAmplifyMarginFactor" class="form-label">Margin Factor</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Margin Factor"
+                               data-param-desc="How close to full-scale. Where 0 is no audio and 1 is full loudness. The end amplification result is this minus safety dB. Normally this should be set to 0.90  to 0.99. Default 0.99."
+                            ></i>
+                        </div>
+                        <input type="number" id="updateWhisperAmplifyMarginFactor" class="form-control" step="0.1" name="margin_factor" required/>
+                        <div class="form-text">
+                            How close to full-scale. Where 0 is no audio and 1 is full loudness.
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="row mt-3">
+                <div class="col-12 text-end">
+                    <button id="submitupdateWhisperAmplify" type="button"
+                            class="btn btn-outline-success">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transcribe Config Tone Removal -->
+        <div id="updateWhisperToneRemoval" class="d-none transcribe-config-section col-12 col-md-6 offset-md-3 mt-4">
+            <h5 id="updateWhisperToneRemovalFormTitle" class="mb-3"></h5>
+            <hr>
+            <form id="updateWhisperToneRemovalForm" class="input-form mt-4">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                <input type="hidden" id="updateWhisperToneRemovalConfigId" name="transcribe_config_id">
+                <input type="hidden" id="updateWhisperToneRemovalConfigName" name="transcribe_config_name">
+
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperToneRemovalEnable" class="form-label">Tone Removal</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Tone Removal"
+                               data-param-desc="If True, the audio uploaded has tones detected and removed before being sent to Whisper. Default: False"
+                            ></i>
+                        </div>
+                        <select id="updateWhisperToneRemovalEnable" class="form-select" name="tone_removal">
+                            <option value="1">True</option>
+                            <option value="0">False</option>
+                        </select>
+                        <div class="form-text">
+                            Enable/Disable alert tone removal before transcribing.
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperToneRemovalMatchingThreshold" class="form-label">Matching Threshold</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Matching Threshold"
+                               data-param-desc="The percentage threshold used to determine if two frequencies are considered a match. For example, a threshold of 2 means that two frequencies are considered matching if they are within x% of each other. Default 2.5%"
+                            ></i>
+                        </div>
+                        <input type="number" id="updateWhisperToneRemovalMatchingThreshold" class="form-control" step="0.1" name="matching_threshold" required/>
+                        <div class="form-text">
+                            The percentage threshold used to determine if two frequencies are considered a match.
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperToneRemovalToneAMinLen" class="form-label">Tone A Minimum Length</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Tone A Minimum Length"
+                               data-param-desc="The minimum length in seconds of an A tone for two tone detections. Default 0.8 Seconds"
+                            ></i>
+                        </div>
+                        <input type="number" id="updateWhisperToneRemovalToneAMinLen" class="form-control" step="0.1" name="tone_a_min_length" required/>
+                        <div class="form-text">
+                            The minimum length in seconds of an A tone for two tone detections.
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperToneRemovalToneBMinLen" class="form-label">Tone B Minimum Length</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Tone B Minimum Length"
+                               data-param-desc="The minimum length in seconds of a B tone for two tone detections. Default 2.7"
+                            ></i>
+                        </div>
+                        <input type="number" id="updateWhisperToneRemovalToneBMinLen" class="form-control" step="0.1" name="tone_b_min_length" required/>
+                        <div class="form-text">
+                            The minimum length in seconds of a B tone for two tone detections.
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperToneRemovalHiLowInterval" class="form-label">Hi Low Interval</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Hi Low Interval"
+                               data-param-desc="The maximum allowed interval in seconds between two consecutive alternating tones. Default is 0.2"
+                            ></i>
+                        </div>
+                        <input type="number" id="updateWhisperToneRemovalHiLowInterval" class="form-control" step="0.1" name="hi_low_interval" required/>
+                        <div class="form-text">
+                            Maximum allowed interval between 2 consecutive alternating hi-low tones.
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperToneRemovalHiLowMinAlternations" class="form-label">Hi Low Minimum Alternations</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Hi Low Minimum Alternations"
+                               data-param-desc="The minimum number of alternations for a hi-low warble tone sequence to be considered valid. Default 6"
+                            ></i>
+                        </div>
+                        <input type="number" id="updateWhisperToneRemovalHiLowMinAlternations" class="form-control" step="1" name="hi_low_min_alternations" required/>
+                        <div class="form-text">
+                            The minimum number of alternations for a hi-low warble tone sequence to be considered valid.
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperToneRemovalLongToneMinLen" class="form-label">Long Tone Minimum Length</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Long Tone Minimum Length"
+                               data-param-desc="The minimum length a long tone needs to be to consider it a match. Default 3.8"
+                            ></i>
+                        </div>
+                        <input type="number" id="updateWhisperToneRemovalLongToneMinLen" class="form-control" step="0.1" name="long_tone_min_length" required/>
+                        <div class="form-text">
+                            The minimum length a long tone needs to be to consider it a match.
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperToneRemovalEnableMdc" class="form-label">Detect MDC/FleetSync</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Detect MDC/FleetSync"
+                               data-param-desc="If True, tone detection detects MDC/FleetSync tones and removes them from the audio. Whisper. Default: False"
+                            ></i>
+                        </div>
+                        <select id="updateWhisperToneRemovalEnableMdc" class="form-select" name="enable_mdc">
+                            <option value="1">True</option>
+                            <option value="0">False</option>
+                        </select>
+                        <div class="form-text">
+                            Enable/Disable MDC tone detection and removal before transcribing.
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="updateWhisperToneRemovalEnableDtmf" class="form-label">Detect DTMF</label>
+                            <i class="bi bi-question "
+                               style="font-size: .9rem; cursor: pointer;"
+                               data-bs-toggle="modal"
+                               data-bs-target="#infoModal"
+                               data-param-title="Detect DTMF"
+                               data-param-desc="If True, tone detection detects DTMF tones and removes them from the audio. Whisper. Default: False"
+                            ></i>
+                        </div>
+                        <select id="updateWhisperToneRemovalEnableDtmf" class="form-select" name="enable_dtmf">
+                            <option value="1">True</option>
+                            <option value="0">False</option>
+                        </select>
+                        <div class="form-text">
+                            Enable/Disable DTMF tone detection and removal before transcribing.
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="row mt-3">
+                <div class="col-12 text-end">
+                    <button id="submitupdateWhisperToneRemoval" type="button"
+                            class="btn btn-outline-success">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+<script>
+    // Caches the transcribe config data retrieved by transcribeConfigId.
+    // Key: transcribeConfigId, Value: transcribe config data object
+    const configDataCache = {};
+
+    /**
+     * Initialize event listeners and sidebar elements once the DOM is ready.
+     */
+    document.addEventListener("DOMContentLoaded", function () {
+        initSidebarBackButton();
+        initAddConfigButton();
+        initInfoModalListeners();
+        initFormListeners();
+        loadConfigurationsMenu();
+        if (window.innerWidth < 768) {
+            document.querySelector("#sidebar").classList.toggle("collapsed");
+        }
+    });
+
+    // =======================
+    // 1. Initialize Sidebar
+    // =======================
+
+    /**
+     * Initializes the back button in the sidebar.
+     */
+    function initSidebarBackButton() {
+        const sidebarNavigation = document.getElementById("sidebarNav");
+
+        const sidebarBackButton = document.createElement("a");
+        sidebarBackButton.setAttribute("class", "sidebar-link");
+        sidebarBackButton.setAttribute("href", "{{ url_for('admin.admin_dashboard') }}");
+
+        // Set the HTML for the back button
+        sidebarBackButton.innerHTML = `<i class="bi bi-caret-left-fill"><i> Back`;
+
+        sidebarNavigation.appendChild(sidebarBackButton);
+    }
+
+    /**
+     * Initializes and appends the "Add New Config" button in the sidebar.
+     */
+    function initAddConfigButton() {
+        const sidebarNavigation = document.getElementById("sidebarNav");
+        const newConfigButton = document.createElement("button");
+
+        // Configure the button for Bootstrap modal
+        newConfigButton.type = "button";
+        newConfigButton.className = "btn btn-primary ms-4 mb-4";
+        newConfigButton.setAttribute("data-bs-toggle", "modal");
+        newConfigButton.setAttribute("data-bs-target", "#addTranscribeConfigModal");
+        newConfigButton.innerHTML = `<i class="bi bi-plus"></i> Add Config`;
+
+        // Append to the navigation area
+        sidebarNavigation.appendChild(newConfigButton);
+    }
+
+    /**
+     * Initializes Info Modal to show details about configuration items
+     */
+    function initInfoModalListeners() {
+        const infoModal = document.getElementById('infoModal');
+        infoModal.addEventListener('show.bs.modal', (event) => {
+            // Button that triggered the modal
+            const button = event.relatedTarget;
+
+            // Extract info from data-* attributes
+            const paramTitle = button.getAttribute('data-param-title');
+            const paramDesc = button.getAttribute('data-param-desc');
+
+            // Update the modal content
+            const modalTitle = infoModal.querySelector('#infoModalTitle');
+            const modalDesc = infoModal.querySelector('#infoModalDescription');
+
+            modalTitle.textContent = paramTitle;
+            modalDesc.textContent = paramDesc;
+        });
+    }
+
+    // =========================
+    // 2. Load Systems & Render
+    // =========================
+
+    /**
+     * Loads and initializes the configurations menu in the sidebar.
+     */
+    async function loadConfigurationsMenu() {
+        const fetchUrl = "/api/whisper/config/get";
+
+        try {
+            // Fetch the transcribe configs data
+            const responseData = await fetchData(fetchUrl);
+            console.log("Populating systems menu with data:", responseData.result);
+
+            // Render the systems in the sidebar
+            renderConfigurationsSidebarMenu(responseData.result);
+        } catch (error) {
+            console.error("Failed to populate systems menu:", error.message);
+            showAlert(`Could not load systems: ${error.message}`, "danger");
+        }
+    }
+
+    /**
+     * Renders a list of transcribe configurations in the sidebar.
+     *
+     * @param {Array} configurations - An array of configuration objects to display.
+     */
+    function renderConfigurationsSidebarMenu(configurations) {
+        const sidebarNavigation = document.getElementById("sidebarNav");
+
+        configurations.forEach((configuration) => {
+            // 1) The top-level LI for this configuration
+            const configurationItem = document.createElement("li");
+            configurationItem.className = "sidebar-item";
+
+            // 2) The clickable system header link
+            const configurationsHeaderLink = document.createElement("a");
+            configurationsHeaderLink.href = "#";
+            configurationsHeaderLink.className = "sidebar-link collapsed";
+            configurationsHeaderLink.setAttribute("data-bs-target", `#${configuration.transcribe_config_id}`);
+            configurationsHeaderLink.setAttribute("data-bs-toggle", "collapse");
+            configurationsHeaderLink.setAttribute("aria-expanded", "false");
+            configurationsHeaderLink.addEventListener("click", () => {
+                hideAllTranscribeConfigSections();
+            });
+
+            configurationsHeaderLink.appendChild(document.createTextNode(configuration.transcribe_config_name));
+
+            // Append the systemHeaderLink to the systemItem
+            configurationItem.appendChild(configurationsHeaderLink);
+
+            // 3) Create a collapsible UL for the system’s sub-options
+            const configurationSubmenu = document.createElement("ul");
+            configurationSubmenu.id = configuration.transcribe_config_id;
+            configurationSubmenu.className = "sidebar-dropdown list-unstyled collapse ms-2";
+            configurationSubmenu.setAttribute("data-bs-parent", "#sidebar");
+
+            // "Basic" submenu item
+            const whisperBasicSubmenuItem = createSubMenuItem("Basic", () => {
+                showTranscribeConfigSection(configuration.transcribe_config_id, "transcribeBasic");
+            });
+
+            // "Decoding" submenu item
+            const whisperDecodingSubmenuItem = createSubMenuItem("Decoding", () => {
+                showTranscribeConfigSection(configuration.transcribe_config_id, "transcribeDecoding");
+            });
+
+            // "Prompt" submenu item
+            const whisperPromptSubmenuItem = createSubMenuItem("Prompt", () => {
+                showTranscribeConfigSection(configuration.transcribe_config_id, "transcribePrompt");
+            });
+
+            // "Advanced" submenu item
+            const whisperAdvancedSubmenuItem = createSubMenuItem("Advanced", () => {
+                showTranscribeConfigSection(configuration.transcribe_config_id, "transcribeAdvanced");
+            });
+
+            // "Vad" submenu item
+            const whisperVadSubmenuItem = createSubMenuItem("VAD", () => {
+                showTranscribeConfigSection(configuration.transcribe_config_id, "transcribeVad");
+            });
+
+            // "Amplify" submenu item
+            const whisperAmplifySubmenuItem = createSubMenuItem("Amplify", () => {
+                showTranscribeConfigSection(configuration.transcribe_config_id, "transcribeAmplify");
+            });
+
+            // "Tone Removal" submenu item
+            const whisperToneRemovalSubmenuItem = createSubMenuItem("Tone Removal", () => {
+                showTranscribeConfigSection(configuration.transcribe_config_id, "transcribeToneRemoval");
+            });
+
+
+            // 4) Append menu items to the Submenu
+            configurationSubmenu.appendChild(whisperBasicSubmenuItem);
+            configurationSubmenu.appendChild(whisperDecodingSubmenuItem);
+            configurationSubmenu.appendChild(whisperPromptSubmenuItem);
+            configurationSubmenu.appendChild(whisperAdvancedSubmenuItem);
+            configurationSubmenu.appendChild(whisperVadSubmenuItem);
+            configurationSubmenu.appendChild(whisperAmplifySubmenuItem);
+            configurationSubmenu.appendChild(whisperToneRemovalSubmenuItem);
+
+            // 5) Finally, append the systemSubmenu to the systemItem
+            configurationItem.appendChild(configurationSubmenu);
+
+            // 6) Append the systemItem <li> to the sidebar
+            sidebarNavigation.appendChild(configurationItem);
+        });
+    }
+
+    /**
+     * Helper to create a submenu item <li> with an <a> link and attach a click handler.
+     */
+    function createSubMenuItem(text, clickHandler) {
+        const submenuItem = document.createElement("li");
+        submenuItem.className = "sidebar-item";
+
+        const submenuLink = document.createElement("a");
+        submenuLink.href = "#";
+        submenuLink.className = "sidebar-link";
+        submenuLink.innerText = text;
+        submenuLink.addEventListener("click", event => {
+            event.preventDefault();
+            if (window.innerWidth < 768) {
+                document.querySelector("#sidebar").classList.toggle("collapsed");
+            }
+            clickHandler();
+        });
+
+        submenuItem.appendChild(submenuLink);
+        return submenuItem;
+    }
+
+    // ===================================
+    // 3. Show Specific System Information
+    // ===================================
+
+    /**
+     * A single function to show the requested system section:
+     * - Hides all sections
+     * - Fetches system data
+     * - Fills the relevant form
+     * - Shows the target section
+     */
+    async function showTranscribeConfigSection(transcribeConfigId, sectionType) {
+        try {
+            hideAllTranscribeConfigSections();
+
+            // If we already have data cached, use it.
+            // Otherwise, fetch and cache.
+            let transcribeConfigData = configDataCache[transcribeConfigId];
+            if (!transcribeConfigData) {
+                const dataURL = `/api/whisper/config/get?transcribe_config_id=${transcribeConfigId}`;
+                const response = await fetchData(dataURL);
+                // Assume response.result is an array with a single object
+                transcribeConfigData = response.result[0];
+                // Cache the result
+                configDataCache[transcribeConfigId] = transcribeConfigData;
+            }
+
+            const mapping = sectionMappings[sectionType];
+            if (!mapping) {
+                console.error(`No mapping found for sectionType: ${sectionType}`);
+                return;
+            }
+
+            // Fill the form fields
+            mapping.fillFunction(transcribeConfigData);
+
+            // Fill all Forms Hidden Input Elements
+            setTranscribeFields(transcribeConfigData.transcribe_config_id, transcribeConfigData.transcribe_config_name)
+
+            // Unhide the section
+            const section = document.getElementById(mapping.containerId);
+            if (section && section.classList.contains("d-none")) {
+                section.classList.remove("d-none");
+            }
+
+        } catch (error) {
+            console.error(`Error loading system data for ${sectionType}:`, error);
+            showAlert(`Could not load system data: ${error.message}`, "danger");
+        }
+    }
+
+    // Maps a section type to the container ID and the function that fills its form
+    const sectionMappings = {
+        transcribeBasic: {
+            containerId: "updateWhisperBasic",
+            fillFunction: fillWhisperBasicForm
+        },
+        transcribeDecoding: {
+            containerId: "updateWhisperDecoding",
+            fillFunction: fillWhisperDecodingForm
+        },
+        transcribePrompt: {
+            containerId: "updateWhisperPrompt",
+            fillFunction: fillWhisperPromptForm
+        },
+        transcribeAdvanced: {
+            containerId: "updateWhisperAdvanced",
+            fillFunction: fillWhisperAdvancedForm
+        },
+        transcribeVad: {
+            containerId: "updateWhisperVad",
+            fillFunction: fillWhisperVadForm
+        },
+        transcribeAmplify: {
+            containerId: "updateWhisperAmplify",
+            fillFunction: fillWhisperAmplifyForm
+        },
+        transcribeToneRemoval: {
+            containerId: "updateWhisperToneRemoval",
+            fillFunction: fillWhisperToneRemovalForm
+        },
+
+
+
+    };
+
+    /**
+     * Hides all "transcribe configuration" sections in the main content area.
+     *
+     */
+    function hideAllTranscribeConfigSections() {
+        const sections = document.querySelectorAll(".transcribe-config-section");
+        sections.forEach(section => {
+            // Only add the class if it isn't already there
+            if (!section.classList.contains("d-none")) {
+                section.classList.add("d-none");
+            }
+            if (section.classList.contains("d-block")) {
+                section.classList.remove("d-block");
+            }
+        });
+    }
+
+    // ======================
+    // 4. Form Functions
+    // ======================
+
+    /**
+     * Initialize the listeners on the varius page forms
+     *
+     */
+    function initFormListeners() {
+
+        // Delete Transcribe Config
+        const deleteConfigButton = document.getElementById("submitDeleteTranscribeConfig");
+        deleteConfigButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            handleFormSubmission("deleteTranscribeConfigForm", "deleteTranscribeConfig");
+        });
+
+        // Adding a new Transcribe Config
+        const addConfigButton = document.getElementById("submitAddTranscribeConfig");
+        addConfigButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            handleFormSubmission("addTranscribeConfigForm", "addTranscribeConfig");
+        });
+
+        // Update System Whisper Basic
+        const submitUpdateWhisperBasic = document.getElementById("submitupdateWhisperBasic");
+        submitUpdateWhisperBasic.addEventListener("click", (event) => {
+            event.preventDefault();
+            handleFormSubmission("updateWhisperBasicForm", "updateWhisperBasic");
+        });
+
+        // Update System Whisper Decoding
+        const submitUpdateWhisperDecoding = document.getElementById("submitUpdateWhisperDecoding");
+        submitUpdateWhisperDecoding.addEventListener("click", (event) => {
+            event.preventDefault();
+            handleFormSubmission("updateWhisperDecodingForm", "updateWhisperDecoding");
+        });
+
+        // Update System Whisper Prompt
+        const submitUpdateWhisperPrompt = document.getElementById("submitUpdateWhisperPrompt");
+        submitUpdateWhisperPrompt.addEventListener("click", (event) => {
+            event.preventDefault();
+            handleFormSubmission("updateWhisperPromptForm", "updateWhisperPrompt");
+        });
+
+        // Update System Whisper Advanced
+        const submitUpdateWhisperAdvanced = document.getElementById("submitUpdateWhisperAdvanced");
+        submitUpdateWhisperAdvanced.addEventListener("click", (event) => {
+            event.preventDefault();
+            handleFormSubmission("updateWhisperAdvancedForm", "updateWhisperAdvanced");
+        });
+
+        // Update System Whisper Vad
+        const submitUpdateWhisperVad = document.getElementById("submitUpdateWhisperVad");
+        submitUpdateWhisperVad.addEventListener("click", (event) => {
+            event.preventDefault();
+            handleFormSubmission("updateWhisperVadForm", "updateWhisperVad");
+        });
+
+        // System Whisper VAD Toggle
+        const vadFilterToggle = document.getElementById('updateWhisperVadFilterToggle');
+        const vadParametersSection = document.getElementById('vadParametersSection');
+
+        vadFilterToggle.addEventListener('change', function() {
+            if (this.checked) {
+                vadParametersSection.classList.add('d-block');
+                vadParametersSection.classList.remove('d-none');
+            } else {
+                vadParametersSection.classList.remove('d-block');
+                vadParametersSection.classList.add('d-none');
+            }
+        });
+
+        // Update System Whisper Amplify
+        const submitUpdateWhisperAmplify = document.getElementById("submitupdateWhisperAmplify");
+        submitUpdateWhisperAmplify.addEventListener("click", (event) => {
+            event.preventDefault();
+            handleFormSubmission("updateWhisperAmplifyForm", "updateWhisperAmplify");
+        });
+
+        // Update System Whisper Tone Removal
+        const submitUpdateWhisperToneRemoval = document.getElementById("submitupdateWhisperToneRemoval");
+        submitUpdateWhisperToneRemoval.addEventListener("click", (event) => {
+            event.preventDefault();
+            handleFormSubmission("updateWhisperToneRemovalForm", "updateWhisperToneRemoval");
+        });
+
+    }
+
+    /**
+     * Populates the "updateWhisperBasic" form fields with the Whisper config data.
+     *
+     * @param {Object} configData - The data object for a single config.
+     */
+    function fillWhisperBasicForm(configData) {
+        // Grab the form and its fields
+        const updateWhisperBasicForm = document.getElementById("updateWhisperBasicForm");
+
+        // Assign values (adjust keys as needed based on your API response)
+        updateWhisperBasicForm.querySelector("#updateWhisperBasicConfigName").value = configData.transcribe_config_name;
+        updateWhisperBasicForm.querySelector("#updateWhisperBasicLanguage").value = configData.transcribe_config.language || "";
+        updateWhisperBasicForm.querySelector("#updateWhisperBasicLogProgress").checked = (configData.log_progress === 1);
+
+        const formTitle = document.getElementById("updateWhisperBasicFormTitle");
+        formTitle.innerText = `Whisper Basic (${configData.transcribe_config_name}) ID: ${configData.transcribe_config_id}`;
+
+        // Populate Delete Modal Since Delete Button is on Basic Page
+        const deleteSystemForm = document.getElementById("deleteTranscribeConfigForm");
+        deleteSystemForm.querySelector("#deleteTranscribeConfigId").value = configData.transcribe_config_id;
+        deleteSystemForm.querySelector("#deleteTranscribeConfigName").value = configData.transcribe_config_name;
+        deleteSystemForm.querySelector("#deleteTranscribeConfigQuestion").textContent = `Delete ${configData.transcribe_config_name}?`;
+
+    }
+
+    /**
+     * Populates the "updateWhisperDecoding" form fields with the system Whisper data.
+     *
+     * @param {Object} configData - The data object for a single system.
+     */
+    function fillWhisperDecodingForm(configData) {
+        // Grab the form and its fields
+        const updateWhisperDecodingForm = document.getElementById("updateWhisperDecodingForm");
+
+        // Assign values (adjust keys as needed based on your API response)
+        updateWhisperDecodingForm.querySelector("#updateWhisperDecodingBatchSize").value = configData.transcribe_config.batch_size;
+        updateWhisperDecodingForm.querySelector("#updateWhisperDecodingBeamSize").value = configData.transcribe_config.beam_size;
+        updateWhisperDecodingForm.querySelector("#updateWhisperDecodingBestOf").value = configData.transcribe_config.best_of;
+        updateWhisperDecodingForm.querySelector("#updateWhisperDecodingPatience").value = configData.transcribe_config.patience;
+        updateWhisperDecodingForm.querySelector("#updateWhisperDecodingLengthPenalty").value = configData.transcribe_config.length_penalty;
+        updateWhisperDecodingForm.querySelector("#updateWhisperDecodingRepetitionPenalty").value = configData.transcribe_config.repetition_penalty;
+        updateWhisperDecodingForm.querySelector("#updateWhisperDecodingNoRepeatNgramSize").value = configData.transcribe_config.no_repeat_ngram_size;
+
+        const temperatureArray = configData.transcribe_config.temperature;
+        const temperatureString = Array.isArray(temperatureArray) ? temperatureArray.join(',') : String(temperatureArray);
+
+        updateWhisperDecodingForm.querySelector("#updateWhisperDecodingTemperature").value = temperatureString;
+        updateWhisperDecodingForm.querySelector("#updateWhisperDecodingCompressionRatioThreshold").value = configData.transcribe_config.compression_ratio_threshold;
+        updateWhisperDecodingForm.querySelector("#updateWhisperDecodingLogProbThreshold").value = configData.transcribe_config.log_prob_threshold;
+        updateWhisperDecodingForm.querySelector("#updateWhisperDecodingNoSpeechThreshold").value = configData.transcribe_config.no_speech_threshold;
+        updateWhisperDecodingForm.querySelector("#updateWhisperDecodingMaxNewTokens").value = configData.transcribe_config.max_new_tokens || "";
+        updateWhisperDecodingForm.querySelector("#updateWhisperDecodingChunkLength").value = configData.transcribe_config.chunk_length || "";
+
+        const formTitle = document.getElementById("updateWhisperDecodingFormTitle");
+        formTitle.innerText = `Whisper Decoding (${configData.transcribe_config_name}) ID: ${configData.transcribe_config_id}`;
+
+    }
+
+    /**
+     * Populates the "updateWhisperPrompt" form fields with the system Whisper data.
+     *
+     * @param {Object} configData - The data object for a single system.
+     */
+    function fillWhisperPromptForm(configData) {
+
+        // Grab the form and its fields
+        const updateWhisperPromptForm = document.getElementById("updateWhisperPromptForm");
+        updateWhisperPromptForm.querySelector("#updateWhisperPromptConditionOnPreviousText").value = configData.transcribe_config.condition_on_previous_text.toString();
+        updateWhisperPromptForm.querySelector("#updateWhisperPromptPromptResetOnTemperature").value = configData.transcribe_config.prompt_reset_on_temperature;
+        updateWhisperPromptForm.querySelector("#updateWhisperPromptInitialPrompt").value = configData.transcribe_config.initial_prompt || "";
+        updateWhisperPromptForm.querySelector("#updateWhisperPromptPrefix").value = configData.transcribe_config.prefix || "";
+        updateWhisperPromptForm.querySelector("#updateWhisperPromptAppendPunctuation").value = configData.transcribe_config.append_punctuations || "";
+        updateWhisperPromptForm.querySelector("#updateWhisperPromptPrependPunctuation").value = configData.transcribe_config.prepend_punctuations || "";
+        updateWhisperPromptForm.querySelector("#updateWhisperPromptSuppressBlank").value = configData.transcribe_config.suppress_blank.toString();
+
+        const suppressTokenArray = configData.transcribe_config.suppress_tokens;
+        const suppressTokenString = Array.isArray(suppressTokenArray) ? suppressTokenArray.join(',') : String(suppressTokenArray);
+
+        updateWhisperPromptForm.querySelector("#updateWhisperPromptSuppressTokens").value = suppressTokenString;
+        updateWhisperPromptForm.querySelector("#updateWhisperPromptWithoutTimestamps").value = configData.transcribe_config.without_timestamps.toString();
+        updateWhisperPromptForm.querySelector("#updateWhisperPromptWordTimestamps").value = configData.transcribe_config.word_timestamps.toString();
+        updateWhisperPromptForm.querySelector("#updateWhisperPromptMaxInitialTimestamp").value = configData.transcribe_config.max_initial_timestamp;
+        updateWhisperPromptForm.querySelector("#updateWhisperPromptHallucinationSilenceThreshold").value = configData.transcribe_config.hallucination_silence_threshold || "";
+        updateWhisperPromptForm.querySelector("#updateWhisperPromptHotwords").value = configData.transcribe_config.hotwords || "";
+
+        const formTitle = document.getElementById("updateWhisperPromptFormTitle");
+        formTitle.innerText = `Whisper Prompt (${configData.transcribe_config_name}) ID: ${configData.transcribe_config_id}`;
+
+    }
+
+    /**
+     * Populates the "updateWhisperAdvanced" form fields with the system Whisper data.
+     *
+     * @param {Object} configData - The data object for a single configuration.
+     */
+    function fillWhisperAdvancedForm(configData) {
+        // Grab the form and its fields
+        const updateWhisperAdvancedForm = document.getElementById("updateWhisperAdvancedForm");
+        updateWhisperAdvancedForm.querySelector("#updateWhisperAdvancedClipTimestamps").value = configData.transcribe_config.clip_timestamps || "";
+        updateWhisperAdvancedForm.querySelector("#updateWhisperAdvancedMultilingual").value = configData.transcribe_config.multilingual.toString();
+        updateWhisperAdvancedForm.querySelector("#updateWhisperAdvancedLanguageDetectionThreshold").value = configData.transcribe_config.language_detection_threshold;
+        updateWhisperAdvancedForm.querySelector("#updateWhisperAdvancedLanguageDetectionSegments").value = configData.transcribe_config.language_detection_segments;
+
+        const formTitle = document.getElementById("updateWhisperAdvancedFormTitle");
+        formTitle.innerText = `Whisper Advanced (${configData.transcribe_config_name}) ID: ${configData.transcribe_config_id}`;
+    }
+
+    /**
+     * Populates the "updateSystemWhisperVad" form fields with the system Whisper data.
+     *
+     * @param {Object} configData - The data object for a single configuration.
+     */
+    function fillWhisperVadForm(configData) {
+        const updateWhisperVadForm = document.getElementById("updateWhisperVadForm");
+        const vadParametersSection = document.getElementById("vadParametersSection");
+
+        let vad_enabled = (configData.vad_config.vad_filter === 1);
+
+        if(vad_enabled) {
+            vadParametersSection.classList.remove("d-none");
+        }
+
+        updateWhisperVadForm.querySelector("#updateWhisperVadFilterToggle").checked = vad_enabled;
+        updateWhisperVadForm.querySelector("#updateWhisperVadConfigId").value = configData.transcribe_config_id;
+        updateWhisperVadForm.querySelector("#updateWhisperVadThreshold").value = configData.vad_config.threshold;
+        updateWhisperVadForm.querySelector("#updateWhisperVadNegThreshold").value = configData.vad_config.neg_threshold || "";
+        updateWhisperVadForm.querySelector("#updateWhisperVadMinSpeechDuration").value = configData.vad_config.min_speech_duration_ms;
+        updateWhisperVadForm.querySelector("#updateWhisperVadMinSilenceDuration").value = configData.vad_config.min_silence_duration_ms;
+        updateWhisperVadForm.querySelector("#updateWhisperVadSpeechPad").value = configData.vad_config.speech_pad_ms;
+
+        const formTitle = document.getElementById("updateWhisperVadFormTitle");
+        formTitle.innerText = `Whisper VAD (${configData.transcribe_config_name}) ID: ${configData.transcribe_config_id}`;
+
+    }
+
+    /**
+     * Populates the "updateSystemWhisperAmplify" form fields with the system Whisper data.
+     *
+     * @param {Object} configData - The data object for a single configuration.
+     */
+    function fillWhisperAmplifyForm(configData) {
+        const updateWhisperAmplifyForm = document.getElementById("updateWhisperAmplifyForm");
+
+
+        updateWhisperAmplifyForm.querySelector("#updateWhisperAmplifyEnable").value = configData.amplify_config.amplify.toString();
+        updateWhisperAmplifyForm.querySelector("#updateWhisperAmplifyConfigId").value = configData.transcribe_config_id;
+        updateWhisperAmplifyForm.querySelector("#updateWhisperAmplifyConfigName").value = configData.transcribe_config_name;
+        updateWhisperAmplifyForm.querySelector("#updateWhisperAmplifySafetyDb").value = configData.amplify_config.safety_db;
+        updateWhisperAmplifyForm.querySelector("#updateWhisperAmplifyMarginFactor").value = configData.amplify_config.margin_factor;
+
+
+        const formTitle = document.getElementById("updateWhisperAmplifyFormTitle");
+        formTitle.innerText = `Whisper Amplify (${configData.transcribe_config_name}) ID: ${configData.transcribe_config_id}`;
+
+    }
+
+    /**
+     * Populates the "updateSystemWhispeToneRemoval" form fields with the system Whisper data.
+     *
+     * @param {Object} configData - The data object for a single configuration.
+     */
+    function fillWhisperToneRemovalForm(configData) {
+        const updateWhisperToneRemovalForm = document.getElementById("updateWhisperToneRemovalForm");
+
+        updateWhisperToneRemovalForm.querySelector("#updateWhisperToneRemovalConfigId").value = configData.transcribe_config_id;
+        updateWhisperToneRemovalForm.querySelector("#updateWhisperToneRemovalConfigName").value = configData.transcribe_config_name;
+
+        updateWhisperToneRemovalForm.querySelector("#updateWhisperToneRemovalEnable").value = configData.tone_removal_config.tone_removal.toString();
+        updateWhisperToneRemovalForm.querySelector("#updateWhisperToneRemovalMatchingThreshold").value = configData.tone_removal_config.matching_threshold;
+        updateWhisperToneRemovalForm.querySelector("#updateWhisperToneRemovalToneAMinLen").value = configData.tone_removal_config.tone_a_min_length;
+        updateWhisperToneRemovalForm.querySelector("#updateWhisperToneRemovalToneBMinLen").value = configData.tone_removal_config.tone_b_min_length;
+        updateWhisperToneRemovalForm.querySelector("#updateWhisperToneRemovalHiLowInterval").value = configData.tone_removal_config.hi_low_interval;
+        updateWhisperToneRemovalForm.querySelector("#updateWhisperToneRemovalHiLowMinAlternations").value = configData.tone_removal_config.hi_low_min_alternations;
+        updateWhisperToneRemovalForm.querySelector("#updateWhisperToneRemovalLongToneMinLen").value = configData.tone_removal_config.long_tone_min_length;
+        updateWhisperToneRemovalForm.querySelector("#updateWhisperToneRemovalEnableMdc").value = configData.tone_removal_config.enable_mdc.toString();
+        updateWhisperToneRemovalForm.querySelector("#updateWhisperToneRemovalEnableDtmf").value = configData.tone_removal_config.enable_dtmf.toString();
+
+
+
+        const formTitle = document.getElementById("updateWhisperToneRemovalFormTitle");
+        formTitle.innerText = `Whisper Tone Removal (${configData.transcribe_config_name}) ID: ${configData.transcribe_config_id}`;
+
+    }
+
+    /**
+     * Sets the config ID and name across all forms that have matching name attributes.
+     *
+     * @param {string | number} transcribeConfigId - The config's unique ID.
+     * @param {string} transcribeConfigName - The config's name.
+     */
+    function setTranscribeFields(transcribeConfigId, transcribeConfigName) {
+        // 1. Set every field named "transcribe_config_id"
+        document.querySelectorAll('[name="transcribe_config_id"]').forEach(el => {
+            el.value = transcribeConfigId;
+        });
+        // 2. Set every field named "transcribe_config_name"
+        document.querySelectorAll('[name="transcribe_config_name"]').forEach(el => {
+            el.value = transcribeConfigName;
+        });
+    }
+
+    // ============================
+    // 5. Shared Form Submissions
+    // ============================
+
+    // Map form types to their respective endpoints
+    const formEndpoints = {
+        updateWhisperBasic: "/api/whisper/config/update/basic",
+        updateWhisperDecoding: "/api/whisper/config/update/decoding",
+        updateWhisperPrompt: "/api/whisper/config/update/prompt",
+        updateWhisperAdvanced: "/api/whisper/config/update/advanced",
+        updateWhisperVad: "/api/whisper/config/update/vad",
+        updateWhisperAmplify: "/api/whisper/config/update/amplify",
+        updateWhisperToneRemoval: "/api/whisper/config/update/tone_removal",
+        addTranscribeConfig: "/api/whisper/config/add",
+        deleteTranscribeConfig: "/api/whisper/config/delete",
+    };
+
+    /**
+     * Submits form data via Fetch API to the appropriate endpoint.
+     *
+     * @param {string} formId - The ID of the form element.
+     * @param {string} formType - The form usage type ("addSystem", etc.).
+     */
+    function handleFormSubmission(formId, formType) {
+        const clear_cache_forms = ["updateWhisperBasic", "updateWhisperDecoding", "updateWhisperPrompt", "updateWhisperAdvanced", "updateWhisperVad", "updateWhisperAmplify", "updateWhisperToneRemoval"]
+        const formElement = document.getElementById(formId);
+        const formData = new FormData(formElement);
+
+        // Determine endpoint
+        const endpoint = formEndpoints[formType];
+        if (!endpoint) {
+            console.error(`No endpoint defined for formType: ${formType}`);
+            return;
+        }
+
+        fetch(endpoint, {method: "POST", body: formData})
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log("Submission Success:", data.message);
+                    showAlert(data.message, "success");
+
+                    // Reload Page Data On New system and delete system
+                    if (formType === "addTranscribeConfig" || formType === "deleteTranscribeConfig") {
+                        reloadPageData();
+                    }
+
+                    // Clear the cache for this system if it's relevant
+                    if (clear_cache_forms.includes(formType)) {
+                        console.log("Resetting Cache:", formType);
+                        const transcribeConfigId = document.getElementById("updateWhisperBasicConfigId").value;
+                        console.log("Resetting Cache:", transcribeConfigId)
+                        if (transcribeConfigId && configDataCache[transcribeConfigId]) {
+                            delete configDataCache[transcribeConfigId];
+                        }
+                    }
+
+                } else {
+                    console.log("Submission Error:", data.message);
+                    showAlert(data.message, "danger");
+                }
+            })
+            .catch(error => {
+                console.error(`An unexpected error occurred: ${error}`);
+                showAlert(`An unexpected error occurred: ${error}`, "danger");
+            });
+    }
+
+
+    /**
+     * Fetches data from a given URL and returns the parsed JSON.
+     *
+     * @param {string} url - The endpoint to fetch data from.
+     * @returns {Object} Parsed JSON data if the request is successful.
+     * @throws Will throw an error if the response is not OK or success is false.
+     */
+    async function fetchData(url) {
+        try {
+            const response = await fetch(url, {method: "GET"});
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch data from ${url}: ${response.statusText}`);
+            }
+
+            const responseData = await response.json();
+            if (responseData.success) {
+                console.log(`Retrieved data from ${url}:`, responseData.message);
+                return responseData;
+            } else {
+                throw new Error(`Failed getting data from ${url}: ${responseData.message}`);
+            }
+        } catch (error) {
+            console.error(`An unexpected error occurred: ${error.message}`);
+            throw error;
+        }
+    }
+
+    // ============================
+    // 7. Reset Page Contents
+    // ============================
+
+    function resetSideNav() {
+        const sidebarNavigation = document.getElementById("sidebarNav");
+        sidebarNavigation.innerHTML = "";
+    }
+
+    function clearConfigDataCache() {
+        Object.keys(configDataCache).forEach((key) => {
+            delete configDataCache[key];
+        });
+    }
+
+    function closeAllModals() {
+        // Select all currently visible modals
+        const openModals = document.querySelectorAll('.modal.show');
+        openModals.forEach(modalEl => {
+            // Get the Bootstrap Modal instance for each .modal element
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) {
+                modalInstance.hide();
+            }
+        });
+    }
+
+    function clearAllForms() {
+        const forms = document.querySelectorAll('.input-form');
+        forms.forEach(form => {
+            // Resets every input/select/textarea in the form to its initial value
+            // If there's no initial/default value, it becomes empty/unchecked
+            form.reset();
+        });
+    }
+
+    function reloadPageData() {
+        hideAllTranscribeConfigSections();
+        resetSideNav();
+        clearAllForms();
+        closeAllModals();
+        clearConfigDataCache();
+        initSidebarBackButton();
+        initAddConfigButton();
+        loadConfigurationsMenu();
+        if (window.innerWidth < 768) {
+            document.querySelector("#sidebar").classList.toggle("collapsed");
+        }
+    }
+
+</script>
+{% endblock %}

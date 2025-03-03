@@ -1,0 +1,2194 @@
+<!-- index.html -->
+{% extends "admin_base.html" %}
+{% block title %}Systems - iCAD Dispatch{% endblock %}
+{% block content %}
+
+    <!-- System Modals -->
+    <!-- Add System Modal -->
+    <div class="modal fade" id="addNewSystemModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+         aria-labelledby="addNewSystemModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addSystemModalLabel">Add System</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addSystemForm" class="input-form">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="addSystemDecimal">System ID</label>
+                                </div>
+                                <input id="addSystemDecimal" class="form-control" type="number" min='1' max='999999999'
+                                       name="system_decimal" required>
+                                <div class="form-text">Give the system an ID number between 1 and 999999999</div>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="addSystemName">System Name</label>
+                                </div>
+                                <input id="addSystemName" class="form-control" type="text" name="system_name" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="addSystemStreamURL">Stream URL</label>
+                                </div>
+                                <input id="addSystemStreamURL" class="form-control" type="text" name="stream_url">
+                                <div class="form-text">Add a URL where the audio can be heard. (Optional)</div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <div class="row mt-3">
+                        <div class="col-12 text-end">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close
+                            </button>
+                            <button id="submitAddSystem" type="button" class="btn btn-outline-success">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete System Modal -->
+    <div class="modal fade" id="deleteSystemModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+         aria-labelledby="deleteSystemModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteSystemModalLabel">Delete System</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="deleteSystemForm" class="input-form">
+                        <h4 id="deleteSystemQuestion"></h4>
+                        <input type="hidden" id="deleteSystemId" name="radio_system_id">
+                        <input type="hidden" id="deleteSystemName" name="system_name">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button id="submitDeleteSystem" type="button" class="btn btn-outline-danger">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Talkgroup Modals -->
+    <!-- Modal: Add Talkgroup -->
+    <div class="modal fade" id="addSystemTalkgroupModal" data-bs-backdrop="static" data-bs-keyboard="false"
+         tabindex="-1" aria-labelledby="addSystemTalkgroupModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addSystemTalkgroupModalLabel">Add New Talkgroup</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addSystemTalkgroupForm">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                        <input type="hidden" id="addSystemTalkgroupSystemId" name="radio_system_id">
+                        <input type="hidden" id="addSystemTalkgroupSystemName" name="system_name">
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="addSystemTalkgroupDecimal">Decimal</label>
+                                </div>
+                                <input id="addSystemTalkgroupDecimal" class="form-control" type="number" min='1'
+                                       max='999999999' name="talkgroup_decimal" required>
+                                <div class="form-text">Give the talkgroup an ID number between 1 and 999999999</div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3" data-bs-toggle="tooltip" data-bs-placement="top"
+                                 title="Talkgroup Name">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label" for="addSystemTalkgroupDescription">Name</label>
+                                </div>
+                                <input class="form-control" type="text" id="addSystemTalkgroupDescription"
+                                       name="talkgroup_description" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3" data-bs-toggle="tooltip" data-bs-placement="top"
+                                 title="Talkgroup Alpha Tag">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label" for="addSystemTalkgroupAlphaTag">Alpha Tag</label>
+                                </div>
+                                <input class="form-control" type="text" id="addSystemTalkgroupAlphaTag"
+                                       name="talkgroup_alpha_tag">
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3" data-bs-toggle="tooltip" data-bs-placement="top"
+                                 title="Talkgroup Service Type (Fire Dispatch, Fire-Tac)">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label" for="addSystemTalkgroupServiceType">Service Tag</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Talkgroup Service Tag"
+                                       data-param-desc="The service type of the talkgroup. Example: Fire Dispatch">
+                                    </i>
+                                </div>
+                                <input class="form-control" type="text" id="addSystemTalkgroupServiceType"
+                                       name="talkgroup_service_tag">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <div class="row mt-3">
+                        <div class="col-12 text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+                            <button type="button" class="btn btn-primary" id="submitAddSystemTalkgroupBtn">
+                                Add Talkgroup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Talkgroup -->
+    <div class="modal fade" id="editSystemTalkgroupModal" data-bs-backdrop="static" data-bs-keyboard="false"
+         tabindex="-1" aria-labelledby="editSystemTalkgroupModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editSystemTalkgroupModalLabel">Edit Talkgroup</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editSystemTalkgroupForm">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                        <input type="hidden" id="editSystemTalkgroupSystemId" name="radio_system_id"/>
+                        <input type="hidden" id="editSystemTalkgroupSystemName" name="system_name"/>
+                        <input type="hidden" id="editSystemTalkgroupId" name="talkgroup_id"/>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="editSystemTalkgroupDecimal">Decimal</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Talkgroup Decimal"
+                                       data-param-desc="A numeric Talkgroup ID given to a talkgroup. Must be unique. Can be any number from 1 - 999999999">
+                                    </i>
+                                </div>
+                                <input id="editSystemTalkgroupDecimal" class="form-control" type="number" min='1'
+                                       max='999999999' name="talkgroup_decimal" required>
+                                <div class="form-text">Give the talkgroup an ID number between 1 and 999999999</div>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1"
+                                     data-bs-toggle="tooltip" data-bs-placement="top" title="Talkgroup Name">
+                                    <label class="form-label" for="editSystemTalkgroupDescription">Name</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Talkgroup Name"
+                                       data-param-desc="The name or description of the talkgroup. Example: Fire 1 Dispatch">
+                                    </i>
+                                </div>
+                                <input class="form-control" type="text" id="editSystemTalkgroupDescription"
+                                       name="talkgroup_description">
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1"
+                                     data-bs-toggle="tooltip" data-bs-placement="top" title="Talkgroup Alpha Tag">
+                                    <label class="form-label" for="editSystemTalkgroupAlphaTag">Alpha Tag</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Talkgroup Alpha tag"
+                                       data-param-desc="A short version of the talkgroup name or description. Example: FD1 Paging">
+                                    </i>
+                                </div>
+                                <input class="form-control" type="text" id="editSystemTalkgroupAlphaTag"
+                                       name="talkgroup_alpha_tag">
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1"
+                                     data-bs-toggle="tooltip" data-bs-placement="top"
+                                     title="Talkgroup Service Type (Fire Dispatch, Fire-Tac)">
+                                    <label class="form-label" for="editSystemTalkgroupServiceType">Service Tag</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Talkgroup Service Tag"
+                                       data-param-desc="The service type of the talkgroup. Example: Fire Dispatch">
+                                    </i>
+                                </div>
+                                <input class="form-control" type="text" id="editSystemTalkgroupServiceType"
+                                       name="talkgroup_service_tag">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <div class="row mt-3">
+                        <div class="col-12 text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+                            <button type="button" class="btn btn-success" id="submitEditSystemTalkgroup">
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Delete System Talkgroup -->
+    <div class="modal fade" id="deleteSystemTalkgroupModal" data-bs-backdrop="static" data-bs-keyboard="false"
+         tabindex="-1" aria-labelledby="deleteSystemTalkgroupModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteSystemTalkgroupModalLabel">Edit Webhook</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="deleteSystemTalkgroupForm" class="input-form">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                        <input type="hidden" id="deleteSystemTalkgroupSystemId" name="radio_system_id"/>
+                        <input type="hidden" id="deleteSystemTalkgroupSystemName" name="system_name"/>
+                        <input type="hidden" id="deleteSystemTalkgroupId" name="talkgroup_id"/>
+                        <input type="hidden" id="deleteSystemTalkgroupDescription" name="talkgroup_description"/>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Config Details -->
+    <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <!-- Modal header -->
+                <div class="modal-header">
+                    <h5 class="modal-title" id="infoModalLabel">Parameter Info</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <h5 id="infoModalTitle"></h5>
+                    <p id="infoModalDescription"></p>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="content px-3 py-2">
+        <div class="container-fluid">
+            <div class="mb-3">
+                <h4>System Editor</h4>
+
+                <!-- General System Configuration -->
+                <div id="updateGeneral" class="d-none system-config-section col-12 col-md-6 offset-md-3 mt-4">
+                    <h5 id="generalFormTitle" class="mb-3"></h5>
+                    <hr>
+                    <form id="updateGeneralForm" class="input-form mt-4">
+                        <input type="hidden" id="updateGeneralSystemId" name="radio_system_id">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateGeneralSystemDecimal">System ID</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="System ID"
+                                       data-param-desc="A numeric System ID given to each system. Must be unique. Can be any number from 1 - 999999">
+                                    </i>
+                                </div>
+                                <input id="updateGeneralSystemDecimal" class="form-control" type="number" min='1'
+                                       max='999999' name="system_decimal" required>
+                                <div class="form-text">Unique Numeric System ID</div>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateGeneralSystemName">System Name</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="System Name"
+                                       data-param-desc="A name for the radio system.">
+                                    </i>
+                                </div>
+                                <input id="updateGeneralSystemName" class="form-control" type="text" name="system_name"
+                                       required>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateGeneralSystemStreamURL">Stream URL</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Stream URL"
+                                       data-param-desc="A URL that points to a system stream where users can listen. Optional.">
+                                    </i>
+                                </div>
+                                <input id="updateGeneralSystemStreamURL" class="form-control" type="text"
+                                       name="stream_url">
+                                <div class="form-text">Add a URL where the audio can be heard. (Optional)</div>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="row mt-3">
+                        <div class="col-12 text-end">
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal"
+                                    data-bs-target="#deleteSystemModal">
+                                Delete
+                            </button>
+                            <button id="submitUpdateGeneralForm" type="button" class="btn btn-outline-success">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Talkgroups -->
+                <div id="updateTalkgroup" class="d-none system-config-section col-12 col-md-6 offset-md-3 mt-4">
+
+                    <div class="col-12 card border">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                System Talkgroups
+                            </h5>
+                            <!-- Button to trigger "Add Talkgroups" modal -->
+                            <button class="btn btn-primary mt-3 mb-2" data-bs-toggle="modal"
+                                    data-bs-target="#addSystemTalkgroupModal">
+                                Add Talkgroup
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <!-- Table for displaying talkgroups -->
+                            <table class="table table-striped table-hover table-responsive" id="talkgroupTable">
+                                <thead>
+                                <tr>
+                                    <th>Decimal</th>
+                                    <th>Name</th>
+                                    <th>Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <!-- Rows will be populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Whisper Basic -->
+                <div id="updateSystemWhisperBasic" class="d-none system-config-section col-12 col-md-6 offset-md-3 mt-4">
+                    <div class="col-12 d-flex">
+                        <div class="card flex-fill border-0">
+                            <div class="card-body py-4">
+                                <h4 class="mb-1">System-Level Whisper Configuration</h4>
+                                <p class="mb-2">
+                                    This configuration applies to the entire system. Any talkgroup that requests a
+                                    transcript and is not added will use these default system-level settings.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <h5 id="systemWhisperBasicFormTitle" class="mb-3"></h5>
+                    <hr>
+                    <form id="updateSystemWhisperBasicForm" class="input-form mt-4">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                        <input type="hidden" id="updateSystemWhisperBasicSystemId" name="radio_system_id">
+                        <input type="hidden" id="updateSystemWhisperBasicSystemName" name="system_name">
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-md-8">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperBasicLanguage" class="form-label">Language</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Language"
+                                       data-param-desc="The language spoken in the audio. It should be a language code such as en or fr. If unset, the language will be detected in the first 30 seconds of audio. Default: Unset">
+                                    </i>
+                                </div>
+                                <input type="text" id="updateSystemWhisperBasicLanguage" name="language"
+                                       class="form-control" />
+                                <div class="form-text">
+                                    Enter a language code like "en" or "fr". If left blank, the language is
+                                    auto-detected.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-md-8">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperBasicTask" class="form-label">Task</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Task"
+                                       data-param-desc="Task to execute (transcribe or translate)">
+                                    </i>
+                                </div>
+                                <select id="updateSystemWhisperBasicTask" name="task" class="form-select">
+                                    <option value="transcribe" selected>Transcribe</option>
+                                    <option value="translate">Translate</option>
+                                </select>
+                                <div class="form-text">
+                                    Choose whether to transcribe or translate the audio.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperBasicLogProgress" class="form-check-label">
+                                        Show Progress
+                                    </label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Task"
+                                       data-param-desc="Enabling will show a progress bar in the application log when transcribing or translating an audio file. Default: Off">
+                                    </i>
+                                </div>
+                                <!-- The hidden field ensures a default value of "0" when the box is unchecked -->
+                                <input type="hidden" name="log_progress" value="0"/>
+                                <input type="checkbox" id="updateSystemWhisperBasicLogProgress" class="form-check-input"
+                                       name="log_progress" value="1"/>
+                                <div class="form-text">
+                                    Display a progress bar/log during processing.
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="row mt-3">
+                        <div class="col-12 text-end">
+                            <button id="submitUpdateSystemWhisperBasic" type="button" class="btn btn-outline-success">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Whisper Decoding -->
+                <div id="updateSystemWhisperDecoding" class="d-none system-config-section col-12 col-md-6 offset-md-3 mt-4">
+                    <h5 id="systemWhisperDecodingFormTitle" class="mb-3"></h5>
+                    <hr>
+                    <form id="updateSystemWhisperDecodingForm" class="input-form mt-4">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                        <input type="hidden" id="updateSystemWhisperDecodingSystemId" name="radio_system_id">
+                        <input type="hidden" id="updateSystemWhisperDecodingSystemName" name="system_name">
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="systemWhisperDecodingBatchSize" class="form-label">
+                                        Batch Size
+                                    </label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Batch Size"
+                                       data-param-desc="The maximum number of parallel requests to model for decoding. Default: 8">
+                                    </i>
+                                </div>
+                                <input type="number" id="systemWhisperDecodingBatchSize" class="form-control"
+                                       name="batch_size" required/>
+                                <div class="form-text">The maximum number of parallel requests to model for decoding.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="systemWhisperDecodingBeamSize" class="form-label">
+                                        Beam Size
+                                    </label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Beam Size"
+                                       data-param-desc="Larger values can improve accuracy but increase computation. Default: 5">
+                                    </i>
+                                </div>
+                                <input type="number" id="systemWhisperDecodingBeamSize" class="form-control"
+                                       name="beam_size" required/>
+                                <div class="form-text">Larger values can improve accuracy but increase computation.
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="systemWhisperDecodingBestOf" class="form-label">
+                                        Best Of
+                                    </label>
+                                    <i class="bi bi-question"
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Best Of"
+                                       data-param-desc="Number of candidates when sampling with non-zero temperature. Default: 5">
+                                    </i>
+                                </div>
+                                <input type="number" id="systemWhisperDecodingBestOf" class="form-control"
+                                       name="best_of" required/>
+                                <div class="form-text">Number of candidates when sampling with non-zero temperature.
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="systemWhisperDecodingPatience" class="form-label">
+                                        Patience
+                                    </label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Patience"
+                                       data-param-desc="Beam search patience factor. Default: 1.0">
+                                    </i>
+                                </div>
+                                <input type="number" id="systemWhisperDecodingPatience" class="form-control" step="0.1"
+                                       name="patience" required/>
+                                <div class="form-text">Beam search patience factor</div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="systemWhisperDecodingLengthPenalty" class="form-label">
+                                        Length Penalty
+                                    </label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Length Penalty"
+                                       data-param-desc="Exponential length penalty constant. Default: 1.0">
+                                    </i>
+                                </div>
+                                <input type="number" id="systemWhisperDecodingLengthPenalty" class="form-control"
+                                       step="0.1" name="length_penalty" required/>
+                                <div class="form-text">Exponential length penalty constant.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="systemWhisperDecodingRepetitionPenalty" class="form-label">
+                                        Repetition Penalty
+                                    </label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Repetition Penalty"
+                                       data-param-desc="Penalize repeated tokens. Values > 1.0 reduce repetition. Default: 1.0">
+                                    </i>
+                                </div>
+                                <input type="number" id="systemWhisperDecodingRepetitionPenalty" class="form-control"
+                                       step="0.1" name="repetition_penalty" required/>
+                                <div class="form-text">Penalize repeated tokens. > 1.0 reduces repetition.
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="systemWhisperDecodingNoRepeatNgramSize" class="form-label">
+                                        No Repeat N-gram Size
+                                    </label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="No Repeat N-gram Size"
+                                       data-param-desc="Prevent repeating n-grams of this size. 0 = disabled. Default: 0">
+
+                                    </i>
+                                </div>
+                                <input type="number" id="systemWhisperDecodingNoRepeatNgramSize" class="form-control"
+                                       name="no_repeat_ngram_size" required/>
+                                <div class="form-text">
+                                    Prevent repeating n-grams of this size.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="systemWhisperDecodingTemperature" class="form-label">
+                                        Temperature
+                                    </label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Temperature"
+                                       data-param-desc="Can be a single value or a list for fallback attempts. Only the first value is used Default: [0.0,0.2,0.4,0.6,0.8,1.0]">
+                                    </i>
+                                </div>
+                                <input type="text" id="systemWhisperDecodingTemperature" class="form-control"
+                                       name="temperature" required/>
+                                <div class="form-text">
+                                    Can be a single value or a comma-separated list in brackets for fallback attempts.
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="systemWhisperDecodingCompressionRatioThreshold" class="form-label">
+                                        Compression Ratio Threshold
+                                    </label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Compression Ratio Threshold"
+                                       data-param-desc="If the gzip compression ratio is above this value, treat as failed. Default: 2.4">
+                                    </i>
+                                </div>
+                                <input type="number" id="systemWhisperDecodingCompressionRatioThreshold"
+                                       class="form-control" step="0.1" name="compression_ratio_threshold" required/>
+                                <div class="form-text">
+                                    If exceeded, treat sample as failed.
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="systemWhisperDecodingLogProbThreshold" class="form-label">
+                                        Log Prob Threshold
+                                    </label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Log Prob Threshold"
+                                       data-param-desc="If the average log probability over sampled tokens is below this value, treat as failed. Default: -1.0">
+                                    </i>
+                                </div>
+                                <input type="number" id="systemWhisperDecodingLogProbThreshold" class="form-control"
+                                       step="0.1" name="log_prob_threshold" required/>
+                                <div class="form-text">Below this, treat sample as failed.</div>
+                            </div>
+
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="systemWhisperDecodingNoSpeechThreshold" class="form-label">
+                                        No Speech Threshold
+                                    </label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="No Speech Threshold"
+                                       data-param-desc="If the no_speech probability is higher than this value AND the average log probability over sampled tokens is below `log_prob_threshold`, consider the segment as silent. Default: 0.6">
+                                    </i>
+                                </div>
+                                <input type="number" id="systemWhisperDecodingNoSpeechThreshold" class="form-control"
+                                       step="0.1" name="no_speech_threshold" required/>
+                                <div class="form-text">
+                                    Above this, consider segment silent if log prob is also below threshold.
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="systemWhisperDecodingMaxNewTokens" class="form-label">
+                                        Max New Tokens
+                                    </label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Max New Tokens"
+                                       data-param-desc="Maximum number of new tokens to generate per-chunk. If not set, the maximum will be set by the default max_length 448. Default is unset."
+                                    >
+                                    </i>
+                                </div>
+                                <input type="number" id="systemWhisperDecodingMaxNewTokens" class="form-control"
+                                       name="max_new_tokens"/>
+                                <div class="form-text">
+                                    Max tokens to generate per chunk.
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="systemWhisperDecodingChunkLength" class="form-label">
+                                        Chunk Length (seconds)
+                                    </label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Chunk Length (seconds)"
+                                       data-param-desc=" The length of audio segments. If it is set, it will overwrite the default chunk_length (30) of the FeatureExtractor. Default is unset.">
+                                    </i>
+                                </div>
+                                <input type="number" id="systemWhisperDecodingChunkLength" class="form-control"
+                                       name="chunk_length"/>
+                                <div class="form-text">
+                                    Overwrites the default chunk_length in the FeatureExtractor.
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="row mt-3">
+                        <div class="col-12 text-end">
+                            <button id="submitUpdateSystemWhisperDecoding" type="button"
+                                    class="btn btn-outline-success">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Whisper Prompt Output -->
+                <div id="updateSystemWhisperPrompt" class="d-none system-config-section col-12 col-md-6 offset-md-3 mt-4">
+                    <h5 id="systemWhisperPromptFormTitle" class="mb-3"></h5>
+                    <hr>
+                    <form id="updateSystemWhisperPromptForm" class="input-form mt-4">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                        <input type="hidden" id="updateSystemWhisperPromptSystemId" name="radio_system_id">
+                        <input type="hidden" id="updateSystemWhisperPromptSystemName" name="system_name">
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperPromptConditionOnPreviousText" class="form-label">Condition
+                                        on Previous Text</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Condition on Previous Text"
+                                       data-param-desc="If True, the previous output of the model is provided as a prompt for the next window; disabling may make the text inconsistent across windows, but the model becomes less prone to getting stuck in a failure loop, such as repetition looping or timestamps going out of sync. Default: True"
+                                    ></i>
+                                </div>
+                                <select id="updateSystemWhisperPromptConditionOnPreviousText" class="form-select"
+                                        name="condition_on_previous_text">
+                                    <option value="1">True</option>
+                                    <option value="0">False</option>
+                                </select>
+                                <div class="form-text">
+                                    Use the previous window's output as a prompt for consistency (may cause loops).
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperPromptPromptResetOnTemperature" class="form-label">Prompt
+                                        Reset On Temperature</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Prompt Reset On Temperature"
+                                       data-param-desc="Resets prompt if temperature is above this value. Arg has effect only if condition_on_previous_text is True. Default: 0.5"
+                                    ></i>
+                                </div>
+                                <input type="number" id="updateSystemWhisperPromptPromptResetOnTemperature"
+                                       class="form-control" step="0.1" name="prompt_reset_on_temperature" required/>
+                                <div class="form-text">
+                                    If above this temperature, reset prompt (only applies if condition_on_previous_text
+                                    = True).
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperPromptInitialPrompt" class="form-label">Initial
+                                        Prompt</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Initial Prompt"
+                                       data-param-desc="Optional text string or iterable of token ids to provide as a prompt for the first window. Default: Unset"
+                                    ></i>
+                                </div>
+                                <textarea id="updateSystemWhisperPromptInitialPrompt" class="form-control" rows="2"
+                                          name="initial_prompt"></textarea>
+                                <div class="form-text">
+                                    Optional text or token IDs for the first window prompt.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperPromptPrefix" class="form-label">Prefix</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Prefix"
+                                       data-param-desc="Optional text to provide as a prefix for the first window. Default Unset"
+                                    ></i>
+                                </div>
+                                <textarea id="updateSystemWhisperPromptPrefix" class="form-control" rows="2"
+                                          name="prefix"></textarea>
+                                <div class="form-text">
+                                    Optional text always prepended to the output. If set, it overrides hotwords.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperPromptPrependPunctuation" class="form-label">Prepend Punctuation</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Prepend Punctuation"
+                                       data-param-desc="If word_timestamps is True, merge these punctuation symbols with the next word. Default: &quot;'“¿([{-、"
+                                    ></i>
+                                </div>
+                                <input type="text" id="updateSystemWhisperPromptPrependPunctuation"
+                                       class="form-control" name="prepend_punctuations"/>
+                                <div class="form-text">
+                                    If word_timestamps is True, merge these punctuation symbols with the next word.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperPromptAppendPunctuation" class="form-label">Append Punctuation</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Append Punctuation"
+                                       data-param-desc="If word_timestamps is True, merge these punctuation symbols with the previous word. Default: &quot;'.。,，!！?？:：”)]}、"
+                                    ></i>
+                                </div>
+                                <input type="text" id="updateSystemWhisperPromptAppendPunctuation"
+                                       class="form-control" name="append_punctuations"/>
+                                <div class="form-text">
+                                    If word_timestamps is True, merge these punctuation symbols with the previous word.
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="row g-3 mt-1">
+
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperPromptSuppressBlank" class="form-label">Suppress
+                                        Blank</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Suppress Blank"
+                                       data-param-desc="Suppress blank outputs at the beginning of the sampling. Default: True"
+                                    ></i>
+                                </div>
+                                <select id="updateSystemWhisperPromptSuppressBlank" class="form-select"
+                                        name="suppress_blank">
+                                    <option value="1">True</option>
+                                    <option value="0">False</option>
+                                </select>
+                                <div class="form-text">
+                                    Suppress blank outputs at the beginning of sampling.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperPromptSuppressTokens" class="form-label">Suppress
+                                        Tokens</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Suppress Tokens"
+                                       data-param-desc="Comma seperated list of token IDs to suppress. -1 will suppress a default set of symbols as defined in `tokenizer.non_speech_tokens()`. Default: -1"
+                                    ></i>
+                                </div>
+                                <input type="text" id="updateSystemWhisperPromptSuppressTokens" class="form-control"
+                                       name="suppress_tokens" required/>
+                                <div class="form-text">
+                                    Comma-separated token IDs to suppress (-1 means default non-speech tokens).
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperPromptWithoutTimestamps" class="form-label">Without
+                                        Timestamps</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Without Timestamps"
+                                       data-param-desc="Only sample text tokens. Default: False"
+                                    ></i>
+                                </div>
+                                <select id="updateSystemWhisperPromptWithoutTimestamps" class="form-select"
+                                        name="without_timestamps">
+                                    <option value="1">True</option>
+                                    <option value="0">False</option>
+                                </select>
+                                <div class="form-text">
+                                    If true, only sample text tokens (no timestamps).
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperPromptWordTimestamps" class="form-label">Word
+                                        Timestamps</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Word Timestamps"
+                                       data-param-desc="Extract word-level timestamps using the cross-attention pattern and dynamic time warping, and include the timestamps for each word in each segment. Default: False"
+                                    ></i>
+                                </div>
+                                <select id="updateSystemWhisperPromptWordTimestamps" class="form-select"
+                                        name="word_timestamps">
+                                    <option value="1">True</option>
+                                    <option value="0">False</option>
+                                </select>
+                                <div class="form-text">
+                                    If true, extract word-level timestamps via cross-attention and dynamic time warping.
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperPromptMaxInitialTimestamp" class="form-label">Max
+                                        Initial Timestamp</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Max Initial Timestamp"
+                                       data-param-desc="The initial timestamp cannot be later than this. Default: 1.0"
+                                    ></i>
+                                </div>
+                                <input type="number" id="updateSystemWhisperPromptMaxInitialTimestamp"
+                                       class="form-control" step="0.1" name="max_initial_timestamp" required/>
+                                <div class="form-text">
+                                    The initial timestamp cannot exceed this value.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-1">
+
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperPromptHallucinationSilenceThreshold"
+                                           class="form-label">Hallucination Silence Threshold</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Hallucination Silence Threshold"
+                                       data-param-desc="When word_timestamps is True, skip silent periods longer than this threshold (in seconds) when a possible hallucination is detected. Default: Unset"
+                                    ></i>
+                                </div>
+                                <input type="number" id="updateSystemWhisperPromptHallucinationSilenceThreshold"
+                                       class="form-control" step="0.1" name="hallucination_silence_threshold"/>
+                                <div class="form-text">
+                                    Skip long silent periods to avoid hallucinated text if word_timestamps is true.
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperPromptHotwords" class="form-label">Hotwords / Hint
+                                        Phrases</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Hotwords / Hint Phrases"
+                                       data-param-desc=" Hotwords/hint phrases to provide the model with. Has no effect if prefix is set. Default: Unset"
+                                    ></i>
+                                </div>
+                                <input type="text" id="updateSystemWhisperPromptHotwords" class="form-control"
+                                       name="hotwords"/>
+                                <div class="form-text">
+                                    Comma-separated hint phrases. Only used if prefix is not set.
+                                </div>
+                            </div>
+
+                        </div>
+                    </form>
+                    <div class="row mt-3">
+                        <div class="col-12 text-end">
+                            <button id="submitUpdateSystemWhisperPrompt" type="button"
+                                    class="btn btn-outline-success">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Whisper Advanced -->
+                <div id="updateSystemWhisperAdvanced" class="d-none system-config-section col-12 col-md-6 offset-md-3 mt-4">
+                    <h5 id="systemWhisperAdvancedFormTitle" class="mb-3"></h5>
+                    <hr>
+                    <form id="updateSystemWhisperAdvancedForm" class="input-form mt-4">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                        <input type="hidden" id="updateSystemWhisperAdvancedSystemId" name="radio_system_id">
+                        <input type="hidden" id="updateSystemWhisperAdvancedSystemName" name="system_name">
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperAdvancedClipTimestamps" class="form-label">Clip Timestamps</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Clip Timestamps"
+                                       data-param-desc="Comma-separated list start,end,start,end,... timestamps (in seconds) of clips to process. The last end timestamp defaults to the end of the file. vad_filter will be ignored if clip_timestamps is used. Default: Unset"
+                                    ></i>
+                                </div>
+                                <input type="text" id="updateSystemWhisperAdvancedClipTimestamps" class="form-control" name="clip_timestamps"/>
+                                <div class="form-text">
+                                    Comma-separated start,end pairs. VAD is ignored if clip_timestamps is used.
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="updateSystemWhisperAdvancedMultilingual" class="form-label">Multilingual</label>
+                                        <i class="bi bi-question "
+                                           style="font-size: .9rem; cursor: pointer;"
+                                           data-bs-toggle="modal"
+                                           data-bs-target="#infoModal"
+                                           data-param-title="Multilingual"
+                                           data-param-desc="Perform language detection on every segment. Default: False"
+                                        ></i>
+                                    </div>
+                                <select class="form-select" id="updateSystemWhisperAdvancedMultilingual" name="multilingual">
+                                    <option value="1">True</option>
+                                    <option value="0">False</option>
+                                </select>
+                                <div class="form-text">
+                                    Perform language detection on every segment.
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperAdvancedLanguageDetectionThreshold" class="form-label">Language Detection Threshold</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Language Detection Threshold"
+                                       data-param-desc="If the maximum probability of the language tokens is higher than this value, the language is detected. Default: 0.5"
+                                    ></i>
+                                </div>
+                                <input type="number" id="updateSystemWhisperAdvancedLanguageDetectionThreshold" class="form-control" step="0.5" name="language_detection_threshold" required/>
+                                <div class="form-text">
+                                    If the highest probability of a language token is above this, language is detected.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="updateSystemWhisperAdvancedLanguageDetectionSegments" class="form-label">Language Detection Segments</label>
+                                    <i class="bi bi-question "
+                                       style="font-size: .9rem; cursor: pointer;"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#infoModal"
+                                       data-param-title="Language Detection Segments"
+                                       data-param-desc="Number of segments to consider for the language detection. Default: 1"
+                                    ></i>
+                                </div>
+                                <input type="number" id="updateSystemWhisperAdvancedLanguageDetectionSegments" class="form-control" step="1" name="language_detection_segments" required/>
+                                <div class="form-text">
+                                    How many segments to consider for language detection.
+                                </div>
+                            </div>
+                        </div>
+
+                    </form>
+                    <div class="row mt-3">
+                        <div class="col-12 text-end">
+                            <button id="submitUpdateSystemWhisperAdvanced" type="button"
+                                    class="btn btn-outline-success">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Whisper Vad -->
+                <div id="updateSystemWhisperVad" class="d-none system-config-section col-12 col-md-6 offset-md-3 mt-4">
+                    <h5 id="systemWhisperVadFormTitle" class="mb-3"></h5>
+                    <hr>
+                    <form id="updateSystemWhisperVadForm" class="input-form mt-4">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"/>
+                        <input type="hidden" id="updateSystemWhisperVadSystemId" name="radio_system_id">
+                        <input type="hidden" id="updateSystemWhisperVadSystemName" name="system_name">
+                        <input type="hidden" id="updateSystemWhisperVadTranscribeConfigId" name="transcribe_config_id">
+
+                        <!-- VAD Filter toggle -->
+                        <div class="form-check form-switch mb-3">
+                            <!-- The hidden field ensures a default value of "0" when the box is unchecked -->
+                            <input type="hidden" name="vad_filter" value="0"/>
+                            <input type="checkbox" id="updateSystemWhisperVadFilterToggle" class="form-check-input" name="vad_filter">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="updateSystemWhisperVadFilterToggle" class="form-check-label">Enable VAD Filter</label>
+                                <i class="bi bi-question "
+                                   style="font-size: .9rem; cursor: pointer;"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#infoModal"
+                                   data-param-title="VAD Filter"
+                                   data-param-desc="Enable the voice activity detection (VAD) to filter out parts of the audio without speech. This step is using the Silero VAD model https://github.com/snakers4/silero-vad. Default: Off"
+                                ></i>
+                            </div>
+                        </div>
+
+                        <!-- Collapsible or hidden inputs for VAD parameters -->
+                        <div id="vadParametersSection" class="d-none">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="updateSystemWhisperVadThreshold" class="form-label">Threshold</label>
+                                        <i class="bi bi-question "
+                                           style="font-size: .9rem; cursor: pointer;"
+                                           data-bs-toggle="modal"
+                                           data-bs-target="#infoModal"
+                                           data-param-title="VAD Threshold"
+                                           data-param-desc="Speech threshold. Silero VAD outputs speech probabilities for each audio chunk, probabilities ABOVE this value are considered as SPEECH. It is better to tune this parameter for each dataset separately, but 'lazy' 0.5 is pretty good for most datasets. Default: 0.5"
+                                        ></i>
+                                    </div>
+                                    <input type="number" id="updateSystemWhisperVadThreshold" class="form-control" step="0.1" name="threshold" required/>
+                                    <div class="form-text">
+                                        Speech threshold. Probabilities above this are considered speech.
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="updateSystemWhisperVadNegThreshold" class="form-label">Neg Threshold</label>
+                                        <i class="bi bi-question "
+                                           style="font-size: .9rem; cursor: pointer;"
+                                           data-bs-toggle="modal"
+                                           data-bs-target="#infoModal"
+                                           data-param-title="VAD Negative Threshold"
+                                           data-param-desc="Silence threshold for determining the end of speech. If a probability is lower than neg_threshold, it is always considered silence. Values higher than neg_threshold are only considered speech if the previous sample was classified as speech; otherwise, they are treated as silence. This parameter helps refine the detection of speech transitions, ensuring smoother segment boundaries. Default: Unset"
+                                        ></i>
+                                    </div>
+                                    <input type="number" id="updateSystemWhisperVadNegThreshold" class="form-control" step="0.1" name="neg_threshold" />
+                                    <div class="form-text">
+                                        Silence threshold for determining end of speech.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mt-1">
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="updateSystemWhisperVadMinSpeechDuration" class="form-label">Min Speech Duration (ms)</label>
+                                        <i class="bi bi-question "
+                                           style="font-size: .9rem; cursor: pointer;"
+                                           data-bs-toggle="modal"
+                                           data-bs-target="#infoModal"
+                                           data-param-title="Min Speech Duration (ms)"
+                                           data-param-desc="Final speech chunks shorter min_speech_duration_ms are thrown out. Default: 0"
+                                        ></i>
+                                    </div>
+                                    <input type="number" id="updateSystemWhisperVadMinSpeechDuration" class="form-control" name="min_speech_duration_ms" required/>
+                                    <div class="form-text">
+                                        Speech chunks shorter than this will be thrown out. in Milliseconds.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mt-1">
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="updateSystemWhisperVadMinSilenceDuration" class="form-label">Min Silence Duration (ms)</label>
+                                        <i class="bi bi-question "
+                                           style="font-size: .9rem; cursor: pointer;"
+                                           data-bs-toggle="modal"
+                                           data-bs-target="#infoModal"
+                                           data-param-title="Min Silence Duration (ms)"
+                                           data-param-desc="In the end of each speech chunk wait for min_silence_duration_ms before separating it. Default: 2000"
+                                        ></i>
+                                    </div>
+                                    <input type="number" id="updateSystemWhisperVadMinSilenceDuration" class="form-control" name="min_silence_duration_ms" required/>
+                                    <div class="form-text">
+                                        Time to wait before marking the end of a speech chunk.
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="updateSystemWhisperVadSpeechPad" class="form-label">Speech Pad (ms)</label>
+                                        <i class="bi bi-question "
+                                           style="font-size: .9rem; cursor: pointer;"
+                                           data-bs-toggle="modal"
+                                           data-bs-target="#infoModal"
+                                           data-param-title="Speech Pad (ms)"
+                                           data-param-desc="Final speech chunks are padded by speech_pad_ms each side. Default: 400"
+                                        ></i>
+                                    </div>
+                                    <input type="number" id="updateSystemWhisperVadSpeechPad" class="form-control" name="speech_pad_ms" required/>
+                                    <div class="form-text">
+                                        Final speech chunks are padded by this amount each side.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="row mt-3">
+                        <div class="col-12 text-end">
+                            <button id="submitUpdateSystemWhisperVad" type="button"
+                                    class="btn btn-outline-success">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Caches the *detailed* system data retrieved by radioSystemId.
+        // Key: radioSystemId, Value: system data object
+        const systemDataCache = {};
+
+        /**
+         * Initialize event listeners and sidebar elements once the DOM is ready.
+         */
+        document.addEventListener("DOMContentLoaded", function () {
+            initSidebarBackButton();
+            initAddSystemButton();
+            initInfoModalListeners();
+            initFormListeners();
+            loadSystemsMenu();
+            if (window.innerWidth < 768) {
+                document.querySelector("#sidebar").classList.toggle("collapsed");
+            }
+        });
+
+
+        // =======================
+        // 1. Initialize Sidebar
+        // =======================
+
+        /**
+         * Initializes the back button in the sidebar.
+         */
+        function initSidebarBackButton() {
+            const sidebarNavigation = document.getElementById("sidebarNav");
+
+            const sidebarBackButton = document.createElement("a");
+            sidebarBackButton.setAttribute("class", "sidebar-link");
+            sidebarBackButton.setAttribute("href", "{{ url_for('admin.admin_dashboard') }}");
+
+            // Set the HTML for the back button
+            sidebarBackButton.innerHTML = `<i class="bi bi-caret-left-fill"><i> Back`;
+
+            sidebarNavigation.appendChild(sidebarBackButton);
+        }
+
+        /**
+         * Initializes and appends the "Add New System" button in the sidebar.
+         */
+        function initAddSystemButton() {
+            const sidebarNavigation = document.getElementById("sidebarNav");
+            const newSystemButton = document.createElement("button");
+
+            // Configure the button for Bootstrap modal
+            newSystemButton.type = "button";
+            newSystemButton.className = "btn btn-primary ms-4 mb-4";
+            newSystemButton.setAttribute("data-bs-toggle", "modal");
+            newSystemButton.setAttribute("data-bs-target", "#addNewSystemModal");
+            newSystemButton.innerHTML = `<i class="bi bi-plus"></i> Add System`;
+
+            // Append to the navigation area
+            sidebarNavigation.appendChild(newSystemButton);
+        }
+
+        /**
+         * Initializes Info Whisper Details Info Modal
+         */
+        function initInfoModalListeners() {
+            const infoModal = document.getElementById('infoModal');
+            infoModal.addEventListener('show.bs.modal', (event) => {
+                // Button that triggered the modal
+                const button = event.relatedTarget;
+
+                // Extract info from data-* attributes
+                const paramTitle = button.getAttribute('data-param-title');
+                const paramDesc = button.getAttribute('data-param-desc');
+
+                // Update the modal content
+                const modalTitle = infoModal.querySelector('#infoModalTitle');
+                const modalDesc = infoModal.querySelector('#infoModalDescription');
+
+                modalTitle.textContent = paramTitle;
+                modalDesc.textContent = paramDesc;
+            });
+        }
+
+        // =========================
+        // 2. Load Systems & Render
+        // =========================
+
+        /**
+         * Loads and initializes the systems menu in the sidebar.
+         */
+        async function loadSystemsMenu() {
+            const fetchUrl = "/api/system/get?include_talkgroups=false";
+
+            try {
+                // Fetch the systems data
+                const responseData = await fetchData(fetchUrl);
+                console.log("Populating systems menu with data:", responseData.message);
+
+                // Render the systems in the sidebar
+                renderSystemsSidebarMenu(responseData.result);
+            } catch (error) {
+                console.error("Failed to populate systems menu:", error.message);
+                showAlert(`Could not load systems: ${error.message}`, "danger");
+            }
+        }
+
+        /**
+         * Renders a list of systems in the sidebar.
+         *
+         * @param {Array} systems - An array of system objects to display.
+         */
+        function renderSystemsSidebarMenu(systems) {
+            const sidebarNavigation = document.getElementById("sidebarNav");
+
+            systems.forEach((system) => {
+                // 1) The top-level LI for this system
+                const systemItem = document.createElement("li");
+                systemItem.className = "sidebar-item";
+
+                // 2) The clickable system header link
+                const systemHeaderLink = document.createElement("a");
+                systemHeaderLink.href = "#";
+                systemHeaderLink.className = "sidebar-link collapsed";
+                systemHeaderLink.setAttribute("data-bs-target", `#${system.radio_system_id}`);
+                systemHeaderLink.setAttribute("data-bs-toggle", "collapse");
+                systemHeaderLink.setAttribute("aria-expanded", "false");
+                systemHeaderLink.addEventListener("click", () => {
+                    hideAllSystemConfigSections();
+                });
+
+                systemHeaderLink.appendChild(document.createTextNode(system.system_name));
+
+                // Append the systemHeaderLink to the systemItem
+                systemItem.appendChild(systemHeaderLink);
+
+                // 3) Create a collapsible UL for the system’s sub-options
+                const systemSubmenu = document.createElement("ul");
+                systemSubmenu.id = system.radio_system_id;
+                systemSubmenu.className = "sidebar-dropdown list-unstyled collapse ms-2";
+                systemSubmenu.setAttribute("data-bs-parent", "#sidebar");
+
+                // === General Submenu link ===
+                const generalSubMenuItem = createSubMenuItem("General", () => {
+                    showSystemSection(system.radio_system_id, "general");
+                });
+
+                // === Talkgroups Submenu link open talkgroup editor ===
+
+                const talkgroupSubMenuItem = document.createElement("a");
+                talkgroupSubMenuItem.setAttribute("class", "sidebar-link");
+                talkgroupSubMenuItem.setAttribute("href", `talkgroups/${system.radio_system_id}`);
+
+                // Set the HTML for the back button
+                talkgroupSubMenuItem.innerHTML = `Talkgroups`;
+
+                // === Whisper top-level LI (for the collapsible “Whisper” item) ===
+                const whisperLi = document.createElement("li");
+                whisperLi.className = "sidebar-item";
+
+                // 4) The “Whisper” heading link (collapsible)
+                const whisperSubMenuItemLink = document.createElement("a");
+                whisperSubMenuItemLink.href = "#";
+                whisperSubMenuItemLink.className = "sidebar-link collapsed";
+                whisperSubMenuItemLink.setAttribute("data-bs-target", `#whisper_${system.radio_system_id}`);
+                whisperSubMenuItemLink.setAttribute("data-bs-toggle", "collapse");
+                whisperSubMenuItemLink.setAttribute("aria-expanded", "false");
+                whisperSubMenuItemLink.appendChild(document.createTextNode("Whisper"));
+                whisperSubMenuItemLink.addEventListener("click", () => {
+                    hideAllSystemConfigSections();
+                });
+
+                // Append the link to the whisperLi
+                whisperLi.appendChild(whisperSubMenuItemLink);
+
+                // 5) Create the nested UL for Whisper’s sub-items
+                const systemWhisperSubmenu = document.createElement("ul");
+                systemWhisperSubmenu.id = `whisper_${system.radio_system_id}`;
+                systemWhisperSubmenu.className = "sidebar-dropdown list-unstyled collapse ms-2";
+
+                // "Basic" submenu item under "Whisper"
+                const whisperBasicSubmenuItem = createSubMenuItem("Basic", () => {
+                    showSystemSection(system.radio_system_id, "systemWhisperBasic");
+                });
+
+                // "Decoding" submenu item under "Whisper"
+                const whisperDecodingSubmenuItem = createSubMenuItem("Decoding", () => {
+                    showSystemSection(system.radio_system_id, "systemWhisperDecoding");
+                });
+
+                // "Prompt" submenu item under "Whisper"
+                const whisperPromptSubmenuItem = createSubMenuItem("Prompt", () => {
+                    showSystemSection(system.radio_system_id, "systemWhisperPrompt");
+                });
+
+                // "Advanced" submenu item under "Whisper"
+                const whisperAdvancedSubmenuItem = createSubMenuItem("Advanced", () => {
+                    showSystemSection(system.radio_system_id, "systemWhisperAdvanced");
+                });
+
+                // "Vad" submenu item under "Whisper"
+                const whisperVadSubmenuItem = createSubMenuItem("VAD", () => {
+                    showSystemSection(system.radio_system_id, "systemWhisperVad");
+                });
+
+                systemWhisperSubmenu.appendChild(whisperBasicSubmenuItem);
+                systemWhisperSubmenu.appendChild(whisperDecodingSubmenuItem);
+                systemWhisperSubmenu.appendChild(whisperPromptSubmenuItem);
+                systemWhisperSubmenu.appendChild(whisperAdvancedSubmenuItem);
+                systemWhisperSubmenu.appendChild(whisperVadSubmenuItem);
+
+                // Append the nested UL to whisperLi (so it collapses under “Whisper”)
+                whisperLi.appendChild(systemWhisperSubmenu);
+
+                // 6) Append “General,” “Talkgroups,” and the “Whisper” LI to the systemSubmenu
+                systemSubmenu.appendChild(generalSubMenuItem);
+                systemSubmenu.appendChild(talkgroupSubMenuItem);
+                systemSubmenu.appendChild(whisperLi);
+
+                // 7) Finally, append the systemSubmenu to the systemItem
+                systemItem.appendChild(systemSubmenu);
+
+                // 8) Append the systemItem <li> to the sidebar
+                sidebarNavigation.appendChild(systemItem);
+            });
+        }
+
+        /**
+         * Helper to create a submenu item <li> with an <a> link and attach a click handler.
+         */
+        function createSubMenuItem(text, clickHandler) {
+            const submenuItem = document.createElement("li");
+            submenuItem.className = "sidebar-item";
+
+            const submenuLink = document.createElement("a");
+            submenuLink.href = "#";
+            submenuLink.className = "sidebar-link";
+            submenuLink.innerText = text;
+            submenuLink.addEventListener("click", event => {
+                event.preventDefault();
+                if (window.innerWidth < 768) {
+                    document.querySelector("#sidebar").classList.toggle("collapsed");
+                }
+                clickHandler();
+            });
+
+            submenuItem.appendChild(submenuLink);
+            return submenuItem;
+        }
+
+        // ===================================
+        // 3. Show Specific System Information
+        // ===================================
+
+        /**
+         * A single function to show the requested system section:
+         * - Hides all sections
+         * - Fetches system data
+         * - Fills the relevant form
+         * - Shows the target section
+         */
+        async function showSystemSection(radioSystemId, sectionType) {
+            try {
+                hideAllSystemConfigSections();
+
+                // If we already have data cached, use it.
+                // Otherwise, fetch and cache.
+                let systemData = systemDataCache[radioSystemId];
+                if (!systemData) {
+                    const dataURL = `/api/system/get?radio_system_id=${radioSystemId}&include_talkgroups=True&include_config=True`;
+                    const response = await fetchData(dataURL);
+                    // Assume response.result is an array with a single object
+                    systemData = response.result[0];
+                    // Cache the result
+                    systemDataCache[radioSystemId] = systemData;
+                }
+
+                const mapping = sectionMappings[sectionType];
+                if (!mapping) {
+                    console.error(`No mapping found for sectionType: ${sectionType}`);
+                    return;
+                }
+
+                // Fill the form fields
+                mapping.fillFunction(systemData);
+
+                // Fill all Forms Hidden Input Elements
+                setSystemFields(systemData.radio_system_id, systemData.system_name)
+
+                // Unhide the section
+                const section = document.getElementById(mapping.containerId);
+                if (section && section.classList.contains("d-none")) {
+                    section.classList.remove("d-none");
+                }
+
+            } catch (error) {
+                console.error(`Error loading system data for ${sectionType}:`, error);
+                showAlert(`Could not load system data: ${error.message}`, "danger");
+            }
+        }
+
+        // Maps a section type to the container ID and the function that fills its form
+        const sectionMappings = {
+            general: {
+                containerId: "updateGeneral",
+                fillFunction: fillSystemGeneralForm
+            },
+            systemWhisperBasic: {
+                containerId: "updateSystemWhisperBasic",
+                fillFunction: fillSystemWhisperBasicForm
+            },
+            systemWhisperDecoding: {
+                containerId: "updateSystemWhisperDecoding",
+                fillFunction: fillSystemWhisperDecodingForm
+            },
+            systemWhisperPrompt: {
+                containerId: "updateSystemWhisperPrompt",
+                fillFunction: fillSystemWhisperPromptForm
+            },
+            systemWhisperAdvanced: {
+                containerId: "updateSystemWhisperAdvanced",
+                fillFunction: fillSystemWhisperAdvancedForm
+            },
+            systemWhisperVad: {
+                containerId: "updateSystemWhisperVad",
+                fillFunction: fillSystemWhisperVadForm
+            },
+            talkgroup: {
+                containerId: "updateTalkgroup",
+                fillFunction: fillSystemTalkgroupTable
+            }
+
+            // Add more as needed (e.g. talkgroups, pushover, etc.)
+        };
+
+        /**
+         * Hides all "system configuration" sections in the main content area.
+         *
+         * Assumes you mark them with a shared class such as .system-config-section
+         * or you can list their IDs if you have a small set (e.g. #updateSystemGeneral, #updateSystemPushover, etc.).
+         */
+        function hideAllSystemConfigSections() {
+            const sections = document.querySelectorAll(".system-config-section");
+            sections.forEach(section => {
+                // Only add the class if it isn't already there
+                if (!section.classList.contains("d-none")) {
+                    section.classList.add("d-none");
+                }
+            });
+        }
+
+        // ======================
+        // 4. Form Functions
+        // ======================
+
+        /**
+         * Initialize the listeners on the varius page forms
+         *
+         */
+        function initFormListeners() {
+            // General
+            const submitUpdateSystemForm = document.getElementById("submitUpdateGeneralForm");
+            submitUpdateSystemForm.addEventListener("click", (event) => {
+                event.preventDefault();
+                handleFormSubmission("updateGeneralForm", "updateGeneral");
+            });
+
+            // Update System Whisper Basic
+            const submitUpdateSystemWhisperBasic = document.getElementById("submitUpdateSystemWhisperBasic");
+            submitUpdateSystemWhisperBasic.addEventListener("click", (event) => {
+                event.preventDefault();
+                handleFormSubmission("updateSystemWhisperBasicForm", "updateSystemWhisperBasic");
+            });
+
+            // Update System Whisper Decoding
+            const submitUpdateSystemWhisperDecoding = document.getElementById("submitUpdateSystemWhisperDecoding");
+            submitUpdateSystemWhisperDecoding.addEventListener("click", (event) => {
+                event.preventDefault();
+                handleFormSubmission("updateSystemWhisperDecodingForm", "updateSystemWhisperDecoding");
+            });
+
+            // Update System Whisper Prompt
+            const submitUpdateSystemWhisperPrompt = document.getElementById("submitUpdateSystemWhisperPrompt");
+            submitUpdateSystemWhisperPrompt.addEventListener("click", (event) => {
+                event.preventDefault();
+                handleFormSubmission("updateSystemWhisperPromptForm", "updateSystemWhisperPrompt");
+            });
+
+            // Update System Whisper Advanced
+            const submitUpdateSystemWhisperAdvanced = document.getElementById("submitUpdateSystemWhisperAdvanced");
+            submitUpdateSystemWhisperAdvanced.addEventListener("click", (event) => {
+                event.preventDefault();
+                handleFormSubmission("updateSystemWhisperAdvancedForm", "updateSystemWhisperAdvanced");
+            });
+
+            // Update System Whisper Vad
+            const submitUpdateSystemWhisperVad = document.getElementById("submitUpdateSystemWhisperVad");
+            submitUpdateSystemWhisperVad.addEventListener("click", (event) => {
+                event.preventDefault();
+                handleFormSubmission("updateSystemWhisperVadForm", "updateSystemWhisperVad");
+            });
+
+            // System Whisper VAD Toggle
+            const vadFilterToggle = document.getElementById('updateSystemWhisperVadFilterToggle');
+            const vadParametersSection = document.getElementById('vadParametersSection');
+
+            vadFilterToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    vadParametersSection.classList.add('d-block');
+                    vadParametersSection.classList.remove('d-none');
+                } else {
+                    vadParametersSection.classList.remove('d-block');
+                    vadParametersSection.classList.add('d-none');
+                }
+            });
+
+            // Delete system
+            const deleteSystemButton = document.getElementById("submitDeleteSystem");
+            deleteSystemButton.addEventListener("click", (event) => {
+                event.preventDefault();
+                handleFormSubmission("deleteSystemForm", "deleteSystem");
+            });
+
+            // Adding a new system
+            const submitAddSystemButton = document.getElementById("submitAddSystem");
+            submitAddSystemButton.addEventListener("click", (event) => {
+                event.preventDefault();
+                handleFormSubmission("addSystemForm", "addSystem");
+            });
+
+            //Edit System Talkgroup
+            const submitEditSystemTalkgroup = document.getElementById("submitEditSystemTalkgroup");
+            submitEditSystemTalkgroup.addEventListener("click", (event) => {
+                event.preventDefault();
+                handleFormSubmission("editSystemTalkgroupForm", "editSystemTalkgroup");
+            });
+
+            //Add System Talkgroup
+            const submitAddSystemTalkgroupBtn = document.getElementById("submitAddSystemTalkgroupBtn");
+            submitAddSystemTalkgroupBtn.addEventListener("click", (event) => {
+                event.preventDefault();
+                handleFormSubmission("addSystemTalkgroupForm", "addSystemTalkgroup");
+            });
+
+        }
+
+        /**
+         * Populates the "updateSystemGeneral" form fields with the system data.
+         *
+         * @param {Object} systemData - The data object for a single system.
+         */
+        function fillSystemGeneralForm(systemData) {
+            // Grab the form and its fields
+            const updateSystemForm = document.getElementById("updateGeneralForm");
+
+            // Assign values (adjust keys as needed based on your API response)
+            updateSystemForm.querySelector("#updateGeneralSystemId").value = systemData.radio_system_id || "";
+            updateSystemForm.querySelector("#updateGeneralSystemDecimal").value = systemData.system_decimal || "";
+            updateSystemForm.querySelector("#updateGeneralSystemName").value = systemData.system_name || "";
+            updateSystemForm.querySelector("#updateGeneralSystemStreamURL").value = systemData.stream_url || "";
+
+            const generalFormTitle = document.getElementById("generalFormTitle");
+            generalFormTitle.innerText = `General (${systemData.system_name})`;
+
+
+            const deleteSystemForm = document.getElementById("deleteSystemForm");
+            deleteSystemForm.querySelector("#deleteSystemId").value = systemData.radio_system_id || "";
+            deleteSystemForm.querySelector("#deleteSystemName").value = systemData.system_name || "";
+            deleteSystemForm.querySelector("#deleteSystemQuestion").textContent = `Delete ${systemData.system_name}?`;
+
+        }
+
+        /**
+         * Populates the "updateSystemWhisperBasic" form fields with the system Whisper data.
+         *
+         * @param {Object} systemData - The data object for a single system.
+         */
+        function fillSystemWhisperBasicForm(systemData) {
+            // Grab the form and its fields
+            const updateSystemWhisperBasicForm = document.getElementById("updateSystemWhisperBasicForm");
+
+            // Assign values (adjust keys as needed based on your API response)
+            updateSystemWhisperBasicForm.querySelector("#updateSystemWhisperBasicLanguage").value = systemData.transcribe_config.language || "";
+            updateSystemWhisperBasicForm.querySelector("#updateSystemWhisperBasicTask").value = systemData.transcribe_config.task || "";
+            updateSystemWhisperBasicForm.querySelector("#updateSystemWhisperBasicLogProgress").checked = (systemData.transcribe_config.log_progress === 1);
+
+            const formTitle = document.getElementById("systemWhisperBasicFormTitle");
+            formTitle.innerText = `Whisper Basic (${systemData.system_name})`;
+
+        }
+
+        /**
+         * Populates the "updateSystemWhisperDecoding" form fields with the system Whisper data.
+         *
+         * @param {Object} systemData - The data object for a single system.
+         */
+        function fillSystemWhisperDecodingForm(systemData) {
+            // Grab the form and its fields
+            const updateSystemWhisperDecodingForm = document.getElementById("updateSystemWhisperDecodingForm");
+
+            // Assign values (adjust keys as needed based on your API response)
+            updateSystemWhisperDecodingForm.querySelector("#systemWhisperDecodingBatchSize").value = systemData.transcribe_config.batch_size;
+            updateSystemWhisperDecodingForm.querySelector("#systemWhisperDecodingBeamSize").value = systemData.transcribe_config.beam_size;
+            updateSystemWhisperDecodingForm.querySelector("#systemWhisperDecodingBestOf").value = systemData.transcribe_config.best_of;
+            updateSystemWhisperDecodingForm.querySelector("#systemWhisperDecodingPatience").value = systemData.transcribe_config.patience;
+            updateSystemWhisperDecodingForm.querySelector("#systemWhisperDecodingLengthPenalty").value = systemData.transcribe_config.length_penalty;
+            updateSystemWhisperDecodingForm.querySelector("#systemWhisperDecodingRepetitionPenalty").value = systemData.transcribe_config.repetition_penalty;
+            updateSystemWhisperDecodingForm.querySelector("#systemWhisperDecodingNoRepeatNgramSize").value = systemData.transcribe_config.no_repeat_ngram_size;
+
+            const temperatureArray = systemData.transcribe_config.temperature;
+            const temperatureString = Array.isArray(temperatureArray) ? temperatureArray.join(',') : String(temperatureArray);
+
+            updateSystemWhisperDecodingForm.querySelector("#systemWhisperDecodingTemperature").value = temperatureString;
+            updateSystemWhisperDecodingForm.querySelector("#systemWhisperDecodingCompressionRatioThreshold").value = systemData.transcribe_config.compression_ratio_threshold;
+            updateSystemWhisperDecodingForm.querySelector("#systemWhisperDecodingLogProbThreshold").value = systemData.transcribe_config.log_prob_threshold;
+            updateSystemWhisperDecodingForm.querySelector("#systemWhisperDecodingNoSpeechThreshold").value = systemData.transcribe_config.no_speech_threshold;
+            updateSystemWhisperDecodingForm.querySelector("#systemWhisperDecodingMaxNewTokens").value = systemData.transcribe_config.max_new_tokens || "";
+            updateSystemWhisperDecodingForm.querySelector("#systemWhisperDecodingChunkLength").value = systemData.transcribe_config.chunk_length || "";
+
+            const formTitle = document.getElementById("systemWhisperDecodingFormTitle");
+            formTitle.innerText = `Whisper Decoding (${systemData.system_name})`;
+
+        }
+
+        /**
+         * Populates the "updateSystemWhisperPrompt" form fields with the system Whisper data.
+         *
+         * @param {Object} systemData - The data object for a single system.
+         */
+        function fillSystemWhisperPromptForm(systemData) {
+            // Grab the form and its fields
+            const updateSystemWhisperPromptForm = document.getElementById("updateSystemWhisperPromptForm");
+            updateSystemWhisperPromptForm.querySelector("#updateSystemWhisperPromptConditionOnPreviousText").value = systemData.transcribe_config.condition_on_previous_text.toString();
+            updateSystemWhisperPromptForm.querySelector("#updateSystemWhisperPromptPromptResetOnTemperature").value = systemData.transcribe_config.prompt_reset_on_temperature;
+            updateSystemWhisperPromptForm.querySelector("#updateSystemWhisperPromptInitialPrompt").value = systemData.transcribe_config.initial_prompt || "";
+            updateSystemWhisperPromptForm.querySelector("#updateSystemWhisperPromptPrefix").value = systemData.transcribe_config.prefix || "";
+            updateSystemWhisperPromptForm.querySelector("#updateSystemWhisperPromptAppendPunctuation").value = systemData.transcribe_config.append_punctuations || "";
+            updateSystemWhisperPromptForm.querySelector("#updateSystemWhisperPromptPrependPunctuation").value = systemData.transcribe_config.prepend_punctuations || "";
+            updateSystemWhisperPromptForm.querySelector("#updateSystemWhisperPromptSuppressBlank").value = systemData.transcribe_config.suppress_blank.toString();
+
+            const suppressTokenArray = systemData.transcribe_config.suppress_tokens;
+            const suppressTokenString = Array.isArray(suppressTokenArray) ? suppressTokenArray.join(',') : String(suppressTokenArray);
+
+            updateSystemWhisperPromptForm.querySelector("#updateSystemWhisperPromptSuppressTokens").value = suppressTokenString;
+            updateSystemWhisperPromptForm.querySelector("#updateSystemWhisperPromptWithoutTimestamps").value = systemData.transcribe_config.without_timestamps.toString();
+            updateSystemWhisperPromptForm.querySelector("#updateSystemWhisperPromptWordTimestamps").value = systemData.transcribe_config.word_timestamps.toString();
+            updateSystemWhisperPromptForm.querySelector("#updateSystemWhisperPromptMaxInitialTimestamp").value = systemData.transcribe_config.max_initial_timestamp;
+            updateSystemWhisperPromptForm.querySelector("#updateSystemWhisperPromptHallucinationSilenceThreshold").value = systemData.transcribe_config.hallucination_silence_threshold || "";
+            updateSystemWhisperPromptForm.querySelector("#updateSystemWhisperPromptHotwords").value = systemData.transcribe_config.hotwords || "";
+            const formTitle = document.getElementById("systemWhisperPromptFormTitle");
+            formTitle.innerText = `Whisper Prompt (${systemData.system_name})`;
+
+        }
+
+        /**
+         * Populates the "updateSystemWhisperAdvanced" form fields with the system Whisper data.
+         *
+         * @param {Object} systemData - The data object for a single system.
+         */
+        function fillSystemWhisperAdvancedForm(systemData) {
+            // Grab the form and its fields
+            const updateSystemWhisperAdvancedForm = document.getElementById("updateSystemWhisperAdvancedForm");
+            updateSystemWhisperAdvancedForm.querySelector("#updateSystemWhisperAdvancedClipTimestamps").value = systemData.transcribe_config.clip_timestamps || "";
+            updateSystemWhisperAdvancedForm.querySelector("#updateSystemWhisperAdvancedMultilingual").value = systemData.transcribe_config.multilingual.toString();
+            updateSystemWhisperAdvancedForm.querySelector("#updateSystemWhisperAdvancedLanguageDetectionThreshold").value = systemData.transcribe_config.language_detection_threshold;
+            updateSystemWhisperAdvancedForm.querySelector("#updateSystemWhisperAdvancedLanguageDetectionSegments").value = systemData.transcribe_config.language_detection_segments;
+
+            const formTitle = document.getElementById("systemWhisperAdvancedFormTitle");
+            formTitle.innerText = `Whisper Advanced (${systemData.system_name})`;
+
+        }
+
+        /**
+         * Populates the "updateSystemWhisperVad" form fields with the system Whisper data.
+         *
+         * @param {Object} systemData - The data object for a single system.
+         */
+        function fillSystemWhisperVadForm(systemData) {
+            const updateSystemWhisperVadForm = document.getElementById("updateSystemWhisperVadForm");
+            const vadParametersSection = document.getElementById("vadParametersSection");
+
+            updateSystemWhisperVadTranscribeConfigId
+
+            let vad_enabled = (systemData.transcribe_config.vad_filter === 1);
+
+            if(vad_enabled) {
+                vadParametersSection.classList.remove("d-none");
+            }
+            updateSystemWhisperVadForm.querySelector("#updateSystemWhisperVadFilterToggle").checked = vad_enabled;
+            updateSystemWhisperVadForm.querySelector("#updateSystemWhisperVadTranscribeConfigId").value = systemData.transcribe_config.transcribe_config_id;
+            updateSystemWhisperVadForm.querySelector("#updateSystemWhisperVadThreshold").value = systemData.transcribe_config.vad_parameters.threshold;
+            updateSystemWhisperVadForm.querySelector("#updateSystemWhisperVadNegThreshold").value = systemData.transcribe_config.vad_parameters.neg_threshold || "";
+            updateSystemWhisperVadForm.querySelector("#updateSystemWhisperVadMinSpeechDuration").value = systemData.transcribe_config.vad_parameters.min_speech_duration_ms;
+            updateSystemWhisperVadForm.querySelector("#updateSystemWhisperVadMinSilenceDuration").value = systemData.transcribe_config.vad_parameters.min_silence_duration_ms;
+            updateSystemWhisperVadForm.querySelector("#updateSystemWhisperVadSpeechPad").value = systemData.transcribe_config.vad_parameters.speech_pad_ms;
+
+            const formTitle = document.getElementById("systemWhisperVadFormTitle");
+            formTitle.innerText = `Whisper VAD (${systemData.system_name})`;
+
+        }
+        /**
+         * Populates the "talkgroupTable" with System Talkgroups.
+         *
+         * @param {Object} systemData - The data object for a single system.
+         */
+        function fillSystemTalkgroupTable(systemData) {
+            // Clear existing table rows
+            const tbody = document.querySelector('#talkgroupTable tbody');
+            tbody.innerHTML = '';
+
+            let systemTalkgroups = systemData.talkgroups
+
+            // Populate table with data
+            systemTalkgroups.forEach((item) => {
+                const tr = document.createElement('tr');
+
+                // Talkgroup Decimal
+                const tdTalkgroupDecimal = document.createElement('td');
+                tdTalkgroupDecimal.textContent = item.talkgroup_decimal || '';
+                tr.appendChild(tdTalkgroupDecimal);
+
+                // Talkgroup Description
+                const tdTalkgroupName = document.createElement('td');
+                tdTalkgroupName.textContent = item.talkgroup_description || '';
+                tr.appendChild(tdTalkgroupName);
+
+                // Actions
+                const tdActions = document.createElement('td');
+
+                // Edit button
+                const editBtn = document.createElement('button');
+                editBtn.textContent = 'Edit';
+                editBtn.classList.add('btn', 'btn-sm', 'btn-warning', 'me-2');
+                editBtn.addEventListener('click', () => {
+                    openSystemTalkgroupEditModal(item);
+                });
+                tdActions.appendChild(editBtn);
+
+                // Delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.classList.add('btn', 'btn-sm', 'btn-danger');
+                deleteBtn.addEventListener('click', () => {
+                    deleteSystemTalkgroup(item);
+                });
+                tdActions.appendChild(deleteBtn);
+
+                tr.appendChild(tdActions);
+
+                // Add row to table body
+                tbody.appendChild(tr);
+            });
+
+        }
+
+        /**
+         * Populates the "editTalkgroupModal" with talkgroup data.
+         * @param {Object} talkgroupData - The data object for a single talkgroup
+         */
+        // --- Open Edit Modal ---
+        function openSystemTalkgroupEditModal(talkgroupData) {
+            // Populate the edit form with existing values
+            document.getElementById('editSystemTalkgroupId').value = talkgroupData.talkgroup_id;
+            document.getElementById('editSystemTalkgroupDecimal').value = talkgroupData.talkgroup_decimal || '';
+            document.getElementById('editSystemTalkgroupDescription').value = talkgroupData.talkgroup_description || '';
+            document.getElementById('editSystemTalkgroupAlphaTag').value = talkgroupData.talkgroup_alpha_tag || '';
+            document.getElementById('editSystemTalkgroupServiceType').value = talkgroupData.talkgroup_service_tag || '';
+
+            // Show the modal
+            const editTalkgroupModalEl = document.getElementById('editSystemTalkgroupModal');
+            const modal = new bootstrap.Modal(editTalkgroupModalEl);
+            modal.show();
+        }
+
+        /**
+         * Delete Talkgroup Function for Delete Button
+         * @param {Object} talkgroupData - the data object for a single talkgroup
+         */
+        // -- Delete Talkgroup --
+        function deleteSystemTalkgroup(talkgroupData) {
+            if (!confirm(`Are you sure you want to delete this talkgroup: ${talkgrouData.talkgroup_description}?`)) {
+                return;
+            }
+
+
+            //Fill the placeholder form fields
+            const deleteSystemTalkgroupId = document.getElementById('deleteSystemTalkgroupId');
+            deleteSystemTalkgroupId.value = talkgroupData.talkgroup_id;
+
+            const deleteSystemTalkgroupDescription = document.getElementById('deleteSystemTalkgroupDescription');
+            deleteSystemTalkgroupDescription.value = talkgroupData.talkgroup_description;
+
+            handleFormSubmission('deleteSystemTalkgroupForm', 'deleteSystemTalkgroup')
+
+        }
+
+        /**
+         * Sets the system ID and name across all forms that have matching name attributes.
+         *
+         * @param {string | number} radioSystemId - The system's unique ID.
+         * @param {string} systemName - The system's name.
+         */
+        function setSystemFields(radioSystemId, systemName) {
+            // 1. Set every field named "radio_system_id"
+            document.querySelectorAll('[name="radio_system_id"]').forEach(el => {
+                el.value = radioSystemId;
+            });
+            // 2. Set every field named "system_name"
+            document.querySelectorAll('[name="system_name"]').forEach(el => {
+                el.value = systemName;
+            });
+        }
+
+        // ============================
+        // 5. Shared Form Submissions
+        // ============================
+
+        // Map form types to their respective endpoints
+        const formEndpoints = {
+            addSystem: "/api/system/add",
+            updateGeneral: "/api/system/update/general",
+            updateSystemWhisperBasic: "/api/system/update/whisper/basic",
+            updateSystemWhisperDecoding: "/api/system/update/whisper/decoding",
+            updateSystemWhisperPrompt: "/api/system/update/whisper/prompt",
+            updateSystemWhisperAdvanced: "/api/system/update/whisper/advanced",
+            updateSystemWhisperVad: "/api/system/update/whisper/vad",
+            deleteSystem: "/api/system/delete",
+            addSystemTalkgroup: "/api/talkgroup/add",
+            editSystemTalkgroup: "/api/talkgroup/update",
+            deleteSystemTalkgroup: "/api/talkgroup/delete",
+        };
+
+        /**
+         * Submits form data via Fetch API to the appropriate endpoint.
+         *
+         * @param {string} formId - The ID of the form element.
+         * @param {string} formType - The form usage type ("addSystem", etc.).
+         */
+        function handleFormSubmission(formId, formType) {
+            const clear_cache_forms = ["updateGeneral", "updateSystemWhisperBasic", "updateSystemWhisperDecoding", "updateSystemWhisperPrompt", "updateSystemWhisperAdvanced", "updateSystemWhisperVad"]
+            const formElement = document.getElementById(formId);
+            const formData = new FormData(formElement);
+
+            // Determine endpoint
+            const endpoint = formEndpoints[formType];
+            if (!endpoint) {
+                console.error(`No endpoint defined for formType: ${formType}`);
+                return;
+            }
+
+            fetch(endpoint, {method: "POST", body: formData})
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log("Submission Success:", data.message);
+                        showAlert(data.message, "success");
+
+                        // Reload Page Data On New system and delete system
+                        if (formType === "addSystem" || formType === "deleteSystem") {
+                            reloadPageData();
+                        }
+
+                        // Clear the cache for this system if it's relevant
+                        if (clear_cache_forms.includes(formType)) {
+                            console.log("Resetting Cache:", formType);
+                            const systemId = document.getElementById("updateGeneralSystemId").value;
+                            console.log("Resetting Cache:", systemId)
+                            if (systemId && systemDataCache[systemId]) {
+                                delete systemDataCache[systemId];
+                            }
+                        }
+
+                    } else {
+                        console.log("Submission Error:", data.message);
+                        showAlert(data.message, "danger");
+                    }
+                })
+                .catch(error => {
+                    console.error(`An unexpected error occurred: ${error}`);
+                    showAlert(`An unexpected error occurred: ${error}`, "danger");
+                });
+        }
+
+
+        /**
+         * Fetches data from a given URL and returns the parsed JSON.
+         *
+         * @param {string} url - The endpoint to fetch data from.
+         * @returns {Object} Parsed JSON data if the request is successful.
+         * @throws Will throw an error if the response is not OK or success is false.
+         */
+        async function fetchData(url) {
+            try {
+                const response = await fetch(url, {method: "GET"});
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch data from ${url}: ${response.statusText}`);
+                }
+
+                const responseData = await response.json();
+                if (responseData.success) {
+                    console.log(`Retrieved data from ${url}:`, responseData.message);
+                    return responseData;
+                } else {
+                    throw new Error(`Failed getting data from ${url}: ${responseData.message}`);
+                }
+            } catch (error) {
+                console.error(`An unexpected error occurred: ${error.message}`);
+                throw error;
+            }
+        }
+
+
+        // ============================
+        // 7. Reset Page Contents
+        // ============================
+
+        function resetSideNav() {
+            const sidebarNavigation = document.getElementById("sidebarNav");
+            sidebarNavigation.innerHTML = "";
+        }
+
+        function clearSystemDataCache() {
+            Object.keys(systemDataCache).forEach((key) => {
+                delete systemDataCache[key];
+            });
+        }
+
+        function closeAllModals() {
+            // Select all currently visible modals
+            const openModals = document.querySelectorAll('.modal.show');
+            openModals.forEach(modalEl => {
+                // Get the Bootstrap Modal instance for each .modal element
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            });
+        }
+
+        function clearAllForms() {
+            const forms = document.querySelectorAll('.input-form');
+            forms.forEach(form => {
+                // Resets every input/select/textarea in the form to its initial value
+                // If there's no initial/default value, it becomes empty/unchecked
+                form.reset();
+            });
+        }
+
+        function reloadPageData() {
+            hideAllSystemConfigSections();
+            resetSideNav();
+            clearAllForms();
+            closeAllModals();
+            clearSystemDataCache();
+            initSidebarBackButton();
+            initAddSystemButton();
+            loadSystemsMenu();
+            if (window.innerWidth < 768) {
+                document.querySelector("#sidebar").classList.toggle("collapsed");
+            }
+        }
+
+
+    </script>
+{% endblock %}

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}iCAD Dispatch{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Google Fonts -->
+    <!-- Bootstrap 5 CSS -->
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/admin.css') }}" rel="stylesheet">
+
+</head>
+<body>
+<div class="wrapper">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="js-sidebar">
+        <!-- Content For Sidebar -->
+        <div class="h-100">
+            <div class="sidebar-logo">
+                <a href="#">
+                    <img
+                            src="{{ url_for('static', filename='img/logo.png') }}"
+                            height="45px"
+                            alt="iCAD Logo"
+                            loading="lazy"
+                    />
+                </a>
+            </div>
+            <ul id="sidebarNav" class="sidebar-nav">
+            </ul>
+        </div>
+    </aside>
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" role="dialog"
+         aria-labelledby="changePasswordModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="change-password-form" action="{{ url_for('auth.auth_change_password') }}" method="POST">
+                        <div class="form-group mb-3">
+                            <label for="currentPassword">Current Password</label>
+                            <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="newPassword">New Password</label>
+                            <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="confirmPassword">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="main">
+    <!-- Top Nav Bar -->
+        <nav class="navbar navbar-expand px-3 border-bottom">
+            <button class="btn" id="sidebar-toggle" type="button">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="navbar-collapse navbar">
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a href="#" data-bs-toggle="dropdown" class="nav-icon pe-md-0">
+                            <i class="bi bi-person-fill"></i> {{ session.get('username') }} <i class="bi bi-caret-down-fill"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <a href="{{ url_for('admin.admin_dashboard') }}" class="dropdown-item">Dashboard</a>
+                            <a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#changePasswordModal">Change Password</a>
+                            <a href="{{ url_for('auth.auth_logout') }}" class="dropdown-item">Logout</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    <!-- Content -->
+        {% block content %} {% endblock %}
+    <!-- Footer -->
+        <footer class="footer">
+            <div class="container-fluid">
+                <div class="row text-muted">
+                    <div class="col-6 text-start">
+                        <p class="mb-0">
+                            <a href="#" class="text-muted">
+                                <span>&copy; <span id="currentYear"></span> <strong>iCarey Software Solutions</strong></span>
+                            </a>
+                        </p>
+                    </div>
+                    <div class="col-6 text-end">
+                        <ul class="list-inline">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <!-- Toast Alert Messages -->
+        <div aria-live="polite" aria-atomic="true" class="position-relative">
+            <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3">
+                <!-- Toasts will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // Set the current year dynamically in footer
+    document.getElementById("currentYear").textContent = new Date().getFullYear();
+</script>
+<!-- Bootstrap 5 JS -->
+<script src="{{ url_for('static', filename='js/admin_dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/alert_manager.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+
+<!-- Hidden Flash Messages -->
+{% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="flash-message d-none" data-category="{{ category }}" data-message="{{ message }}"></div>
+{% endfor %}
+</body>
+</html>
